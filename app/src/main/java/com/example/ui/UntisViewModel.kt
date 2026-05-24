@@ -59,6 +59,9 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     var isSyncing by mutableStateOf(false)
     var syncMessage by mutableStateOf("Synchronisiert...")
 
+    private val _updateInfo = MutableStateFlow<com.example.utils.UpdateInfo?>(null)
+    val updateInfo: StateFlow<com.example.utils.UpdateInfo?> = _updateInfo.asStateFlow()
+
     // --- Chat Room Messages List ---
     var chatMessages by mutableStateOf(
         listOf(
