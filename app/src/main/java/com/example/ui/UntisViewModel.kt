@@ -62,7 +62,7 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     // --- Chat Room Messages List ---
     var chatMessages by mutableStateOf(
         listOf(
-            com.example.ui.screens.ChatMessage("Neo", "Hallo! Ich bin Neo, dein intelligenter Hausaufgaben- und Stundenplan-Assistent. Du kannst mich fragen, was du aufhast, oder mir ein Foto von deinen Hausaufgaben schicken, um sie direkt eintragen zu lassen! Hast du deinen Gemini API Key in den Einstellungen schon hinterlegt?", null)
+            ChatMessage("Neo", "Hallo! Ich bin Neo, dein intelligenter Hausaufgaben- und Stundenplan-Assistent. Du kannst mich fragen, was du aufhast, oder mir ein Foto von deinen Hausaufgaben schicken, um sie direkt eintragen zu lassen! Hast du deinen Gemini API Key in den Einstellungen schon hinterlegt?", null)
         )
     )
     var activeChatInput by mutableStateOf("")
