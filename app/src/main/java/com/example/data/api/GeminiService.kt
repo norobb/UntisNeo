@@ -35,7 +35,10 @@ object GeminiService {
         textPrompt: String,
         bitmap: Bitmap?,
         userApiKey: String,
-        buildConfigKey: String
+        buildConfigKey: String,
+        studentName: String = "Schüler",
+        homeworksContext: String = "",
+        lessonsContext: String = ""
     ): HomeworkResult = withContext(Dispatchers.IO) {
         // Source key selection
         val apiKey = userApiKey.trim().ifEmpty { buildConfigKey.trim() }
@@ -44,12 +47,24 @@ object GeminiService {
         }
 
         try {
-            // Build system instructions
-            val instructions = "Du bist ein intelligenter Hausaufgaben-Assistent für Schüler. " +
-                    "Analysiere den übergebenen Text oder das hochgeladene Bild eines Arbeitsblatts/Textbuchs. " +
-                    "Extrahiere daraus die strukturierte Hausaufgabe. " +
-                    "Gib das Ergebnis AUSSCHLIESSLICH im folgenden JSON-Format ohne Markdown-Formatierungen zurück: " +
-                    "{\n  \"subjectCode\": \"D\", // z.B. Ma, E, D, Ch, Bio, Phy, L, Ge\n  \"description\": \"Hausaufgabenbeschreibung auf Deutsch\",\n  \"dueDate\": \"YYYY-MM-DD\" // Ein realistisches Fälligkeitsdatum berechnet ab heute (aktuelle Zeit: 2026-05-22)\n}"
+            // Build system instructions with rich student context
+            val instructions = "Du bist 'Untis Neo Smart-Assistant', ein intelligenter, humorvoller und hilfsbereiter Schul-Assistent für Schüler.\n" +
+                    "Hier ist der aktuelle Kontext des Schülers:\n" +
+                    "Name: $studentName\n" +
+                    "Aktuelle unerledigte Hausaufgaben des Schülers:\n$homeworksContext\n" +
+                    "Stundenplan des Schülers für diese Woche:\n$lessonsContext\n\n" +
+                    "Der Schüler kann mit dir plaudern, Fragen stellen (z.B. 'Erkläre mir Photosynthese'), Hausaufgaben abfragen (z.B. 'Was habe ich auf?'), ODER neue Hausaufgaben eintragen (per Texteingabe oder Bildaufnahmen).\n" +
+                    "Entscheide basierend auf der Eingabe, ob der Benutzer eine Hausaufgabe eintragen/erstellen möchte oder nur chatten/fragen möchte.\n" +
+                    "Antworte IMMER im folgenden JSON-Format ohne Markdown-Formatierungen:\n" +
+                    "{\n" +
+                    "  \"responseType\": \"CHAT\", // oder \"HOMEWORK\" wenn eine neue Hausaufgabe erstellt werden soll\n" +
+                    "  \"replyText\": \"Deine ausführliche Antwort auf Deutsch (Erklärung der Frage, Stundenplan-Auskunft oder prägnante Erfolgsmeldung beim Eintragen)\",\n" +
+                    "  \"homework\": { // nur wenn responseType = \"HOMEWORK\"\n" +
+                    "    \"subjectCode\": \"Ma\", // z.B. Ma, E, D, Ch, Bio, Phy, L, Ge (muss ein gültiges Fachkürzel sein)\n" +
+                    "    \"description\": \"Hausaufgabenbeschreibung\",\n" +
+                    "    \"dueDate\": \"2026-05-25\" // fälliges Datum im Format YYYY-MM-DD berechnet ab heute\n" +
+                    "  }\n" +
+                    "}"
 
             val requestJson = JSONObject()
             val contentsArray = JSONArray()
@@ -58,9 +73,9 @@ object GeminiService {
 
             // 1. Text part (Prompt + Instructions hint)
             val promptText = if (textPrompt.isNotEmpty()) {
-                "$textPrompt\n\nIdentifiziere das Fach, die Aufgabe und ein sinnvolles Abgabedatum."
+                "$textPrompt\n\n(Das heutige Datum ist der 23. Mai 2026. Antworte in JSON wie instruiert.)"
             } else {
-                "Analysiere diesen Screenshot und trage das passende Fach, die Aufgabe und das Abgabedatum ein."
+                "Analysiere dieses Bild und trage eventuelle Hausaufgaben ein oder beantworte die Fragen im Bild."
             }
 
             val textPart = JSONObject()
@@ -92,9 +107,6 @@ object GeminiService {
 
             // Generation config with JSON response format
             val config = JSONObject()
-            val responseFormat = JSONObject()
-            responseFormat.put("type", "application/json")
-            // Instead of complicating with schema validation, we just ask for JSON & parse simply
             config.put("responseMimeType", "application/json")
             config.put("temperature", 0.4)
             requestJson.put("generationConfig", config)
@@ -124,21 +136,40 @@ object GeminiService {
             val responseText = firstCandidate.getJSONObject("content").getJSONArray("parts").getJSONObject(0).getString("text")
 
             val cleanJson = responseText.trim().removeSurrounding("```json", "```").trim()
-            val homeworkJson = JSONObject(cleanJson)
 
-            val subjectCode = homeworkJson.optString("subjectCode", "Ma")
-            val description = homeworkJson.optString("description", "Hausaufgabe")
-            val dueDate = homeworkJson.optString("dueDate", "2026-05-25")
+            val parsedResult = try {
+                val outerJson = JSONObject(cleanJson)
+                val type = outerJson.optString("responseType", "CHAT")
+                val replyText = outerJson.optString("replyText", "")
 
-            HomeworkResult.Success(
-                Homework(
-                    subjectCode = subjectCode,
-                    description = description,
-                    dueDate = dueDate,
-                    isCustom = true,
-                    isDone = false
-                )
-            )
+                if (type == "HOMEWORK") {
+                    val hwObj = outerJson.optJSONObject("homework")
+                    if (hwObj != null) {
+                        val subjectCode = hwObj.optString("subjectCode", "Ma")
+                        val description = hwObj.optString("description", "")
+                        val dueDate = hwObj.optString("dueDate", "2026-05-25")
+                        HomeworkResult.Success(
+                            Homework(
+                                subjectCode = subjectCode,
+                                description = description,
+                                dueDate = dueDate,
+                                isCustom = true,
+                                isDone = false
+                            ),
+                            replyText = replyText.ifEmpty { "Ich habe diese Hausaufgabe eingetragen!" }
+                        )
+                    } else {
+                        HomeworkResult.ChatReply(replyText.ifEmpty { "Plauder-Antwort." })
+                    }
+                } else {
+                    HomeworkResult.ChatReply(replyText)
+                }
+            } catch (je: Exception) {
+                // Not standard JSON response format, return direct text response
+                HomeworkResult.ChatReply(responseText)
+            }
+
+            parsedResult
         } catch (e: Exception) {
             Log.e("GeminiService", "Error processing Gemini API homework extraction: ${e.localizedMessage}")
             HomeworkResult.Error("Fehler bei der KI-Analyse: ${e.localizedMessage}")
@@ -147,6 +178,7 @@ object GeminiService {
 }
 
 sealed class HomeworkResult {
-    data class Success(val homework: Homework) : HomeworkResult()
+    data class Success(val homework: Homework, val replyText: String) : HomeworkResult()
+    data class ChatReply(val replyText: String) : HomeworkResult()
     data class Error(val message: String) : HomeworkResult()
 }

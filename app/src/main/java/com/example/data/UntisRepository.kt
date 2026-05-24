@@ -22,14 +22,13 @@ class UntisRepository(
 
     // Save and load settings
     fun saveCredentials(server: String, school: String, user: String, pass: String, useDemo: Boolean) {
-        prefs.edit().apply {
-            putString("server", server)
-            putString("school", school)
-            putString("user", user)
-            putString("pass", pass)
-            putBoolean("use_demo", useDemo)
-            apply()
-        }
+        prefs.edit()
+            .putString("server", server)
+            .putString("school", school)
+            .putString("user", user)
+            .putString("pass", pass)
+            .putBoolean("use_demo", useDemo)
+            .apply()
     }
 
     fun isDemoMode(): Boolean = prefs.getBoolean("use_demo", true)
@@ -46,6 +45,16 @@ class UntisRepository(
     fun getReminderMinutes(): Int = prefs.getInt("reminder_minutes", 60)
     fun saveReminderMinutes(minutes: Int) {
         prefs.edit().putInt("reminder_minutes", minutes).apply()
+    }
+
+    fun getHomeworkNotificationsEnabled(): Boolean = prefs.getBoolean("homework_notif_enabled", true)
+    fun saveHomeworkNotificationsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("homework_notif_enabled", enabled).apply()
+    }
+
+    fun getTimetableNotificationsEnabled(): Boolean = prefs.getBoolean("timetable_notif_enabled", true)
+    fun saveTimetableNotificationsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("timetable_notif_enabled", enabled).apply()
     }
 
     fun getUseStockTheme(): Boolean = prefs.getBoolean("use_stock_theme", false)
@@ -108,8 +117,25 @@ class UntisRepository(
     val allHomeworks: Flow<List<Homework>> = untisDao.getHomeworksFlow()
     val allGrades: Flow<List<Grade>> = untisDao.getGradesFlow()
     val allEventMemos: Flow<List<SchoolEventMemo>> = untisDao.getEventMemosFlow()
+    val allNotifications: Flow<List<AppNotification>> = untisDao.getAllNotificationsFlow()
 
     fun getMessagesFlow(folder: String): Flow<List<MessageItem>> = untisDao.getMessagesFlow(folder)
+
+    suspend fun insertNotification(notif: AppNotification) {
+        untisDao.insertNotification(notif)
+    }
+
+    suspend fun deleteNotification(id: Long) {
+        untisDao.deleteNotification(id)
+    }
+
+    suspend fun clearAllNotifications() {
+        untisDao.clearAllNotifications()
+    }
+
+    suspend fun markAllNotificationsAsRead() {
+        untisDao.markAllNotificationsAsRead()
+    }
 
     suspend fun addHomework(subjectCode: String, desc: String, dueDate: String, frequencyHours: Int) {
         untisDao.insertHomework(
@@ -315,10 +341,10 @@ class UntisRepository(
     }
 
     // Call WebUntis JSON-RPC Direct Endpoint
-    suspend fun performSync(): Boolean {
+    suspend fun performSync(): String {
         if (isDemoMode()) {
             seedMockDataIfEmpty()
-            return true
+            return "SUCCESS"
         }
 
         return try {
@@ -329,7 +355,7 @@ class UntisRepository(
 
             if (serverIp.isEmpty() || schoolId.isEmpty() || username.isEmpty() || password.isEmpty()) {
                 Log.e("UntisRepository", "Credentials missing.")
-                return false
+                return "Zugangsdaten unvollständig."
             }
 
             Log.d("UntisRepository", "Syncing with WebUntis API at $serverIp for school $schoolId...")
@@ -341,14 +367,14 @@ class UntisRepository(
                 untisDao.clearLessons()
                 untisDao.insertLessons(lessons)
                 Log.d("UntisRepository", "Successfully fetched and saved ${lessons.size} lessons.")
-                true
+                "SUCCESS"
             } else {
-                Log.e("UntisRepository", "API returned null. Sync failed.")
-                false
+                "Leere Stundenplandaten erhalten"
             }
         } catch (e: Exception) {
-            Log.e("UntisRepository", "API sync failed, using offline room database cache: ${e.localizedMessage}")
-            false
+            val errMsg = e.message ?: "Unbekannter Fehler bei der Synchronisation"
+            Log.e("UntisRepository", "API sync failed: $errMsg", e)
+            errMsg
         }
     }
 }

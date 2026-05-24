@@ -11,9 +11,10 @@ import androidx.room.RoomDatabase
         Homework::class,
         Grade::class,
         MessageItem::class,
-        SchoolEventMemo::class
+        SchoolEventMemo::class,
+        AppNotification::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

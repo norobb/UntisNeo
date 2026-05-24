@@ -69,4 +69,20 @@ interface UntisDao {
 
     @Query("DELETE FROM schools")
     suspend fun clearEventMemos()
+
+    // App Notifications
+    @Query("SELECT * FROM app_notifications ORDER BY timestamp DESC")
+    fun getAllNotificationsFlow(): Flow<List<AppNotification>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNotification(notif: AppNotification)
+
+    @Query("DELETE FROM app_notifications WHERE id = :id")
+    suspend fun deleteNotification(id: Long)
+
+    @Query("DELETE FROM app_notifications")
+    suspend fun clearAllNotifications()
+
+    @Query("UPDATE app_notifications SET isRead = 1")
+    suspend fun markAllNotificationsAsRead()
 }

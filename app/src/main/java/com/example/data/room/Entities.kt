@@ -62,3 +62,13 @@ data class SchoolEventMemo(
     val content: String,
     val type: String // "ANN_BANNER", "INFO"
 )
+
+@Entity(tableName = "app_notifications")
+data class AppNotification(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val message: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val type: String, // "HOMEWORK" or "TIMETABLE"
+    val isRead: Boolean = false
+)

@@ -30,12 +30,27 @@ fun NothingHeader(
     fontSize: androidx.compose.ui.unit.TextUnit = 24.sp,
     showRedDot: Boolean = true
 ) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.headlineMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(bottom = 16.dp)
-    )
+    Row(
+        modifier = Modifier.padding(bottom = 12.dp, top = 4.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Text(
+            text = title.uppercase(),
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = fontSize,
+            letterSpacing = 2.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        if (showRedDot) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+            )
+        }
+    }
 }
 
 @Composable
@@ -44,11 +59,17 @@ fun NothingCard(
     backgroundColor: Color = NothingCardGray,
     content: @Composable () -> Unit
 ) {
+    val borderColor = if (androidx.compose.foundation.isSystemInDarkTheme()) {
+        Color(0xFF222222)
+    } else {
+        Color(0xFFE2E8F0)
+    }
     Card(
-        modifier = modifier.padding(vertical = 4.dp),
+        modifier = modifier.padding(vertical = 6.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(16.dp)
+        border = BorderStroke(1.dp, borderColor),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
             content()
@@ -66,25 +87,42 @@ fun NothingButton(
     if (isPrimary) {
         Button(
             onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .height(48.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = Color.White
             ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(24.dp)
         ) {
-            Text(text)
+            Text(
+                text = text.uppercase(),
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                fontSize = 13.sp
+            )
         }
     } else {
         OutlinedButton(
             onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .height(48.dp),
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.primary
+                contentColor = MaterialTheme.colorScheme.onSurface
             ),
-            shape = RoundedCornerShape(12.dp)
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)),
+            shape = RoundedCornerShape(24.dp)
         ) {
-            Text(text)
+            Text(
+                text = text.uppercase(),
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                fontSize = 13.sp
+            )
         }
     }
 }
@@ -104,7 +142,7 @@ fun NothingTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        label = { Text(label, style = androidx.compose.ui.text.TextStyle(letterSpacing = 0.5.sp)) },
         modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
@@ -116,7 +154,9 @@ fun NothingTextField(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     )
 }

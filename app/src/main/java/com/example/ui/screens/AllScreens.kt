@@ -4,7 +4,13 @@ import com.example.ui.StringResources
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -78,8 +84,8 @@ fun LogonScreen(viewModel: UntisViewModel) {
 
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, if (androidx.compose.foundation.isSystemInDarkTheme()) Color(0xFF222222) else Color(0xFFE2E8F0)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -233,7 +239,7 @@ fun HomeScreen(viewModel: UntisViewModel) {
                 Surface(
                     color = NothingCardGray,
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE5E5E5)),
+                    border = BorderStroke(1.dp, if (androidx.compose.foundation.isSystemInDarkTheme()) Color(0xFF222222) else Color(0xFFE2E8F0)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -335,6 +341,9 @@ fun HomeScreen(viewModel: UntisViewModel) {
 
         // Quick Stats/Shortcuts Widget (Pixel/Nothing Cards layout)
         item {
+            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -342,8 +351,8 @@ fun HomeScreen(viewModel: UntisViewModel) {
                 // Widget Card 1: Homeworks Todo
                 Surface(
                     color = NothingCardGray,
-                    shape = RoundedCornerShape(28.dp),
-                    border = BorderStroke(1.dp, Color(0xFF333333)),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, borderColor),
                     modifier = Modifier
                         .weight(1f)
                         .clickable { viewModel.currentScreen = StringResources.get("HOMEWORK") }
@@ -353,14 +362,16 @@ fun HomeScreen(viewModel: UntisViewModel) {
                         Text(
                             text = "${activeHwList.size}",
                             fontSize = 32.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.ExtraBold,
                             color = NothingWhite
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = StringResources.get("Aufgaben offen"),
                             fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.Bold,
                             color = NothingMutedGray
                         )
                     }
@@ -369,8 +380,8 @@ fun HomeScreen(viewModel: UntisViewModel) {
                 // Widget Card 2: Messages / Absences combo
                 Surface(
                     color = NothingCardGray,
-                    shape = RoundedCornerShape(28.dp),
-                    border = BorderStroke(1.dp, Color(0xFF333333)),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, borderColor),
                     modifier = Modifier
                         .weight(1f)
                         .clickable { viewModel.currentScreen = "MESSAGES" }
@@ -379,14 +390,16 @@ fun HomeScreen(viewModel: UntisViewModel) {
                         Text(
                             text = "0",
                             fontSize = 32.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.ExtraBold,
                             color = NothingWhite
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = StringResources.get("Fehlstunden (0 krank)"),
                             fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.Bold,
                             color = NothingMutedGray
                         )
                     }
@@ -396,10 +409,13 @@ fun HomeScreen(viewModel: UntisViewModel) {
 
         // School Information Quick shortcuts mimicking original Untis
         item {
+            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color(0xFF333333)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(8.dp)) {
@@ -414,11 +430,11 @@ fun HomeScreen(viewModel: UntisViewModel) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Phone, contentDescription = null, tint = NothingWhite, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text(StringResources.get("Lehrer Sprechstunden"), fontFamily = FontFamily.Monospace, color = NothingWhite, fontSize = 13.sp)
+                            Text(StringResources.get("Lehrer Sprechstunden"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Medium, color = NothingWhite, fontSize = 13.sp)
                         }
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = NothingMutedGray)
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = NothingMutedGray, modifier = Modifier.size(20.dp))
                     }
-                    Divider(color = Color(0xFF333333))
+                    HorizontalDivider(color = borderColor)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -435,9 +451,9 @@ fun HomeScreen(viewModel: UntisViewModel) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.DateRange, contentDescription = null, tint = NothingWhite, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text(StringResources.get("Ferien & Feiertage"), fontFamily = FontFamily.Monospace, color = NothingWhite, fontSize = 13.sp)
+                            Text(StringResources.get("Ferien & Feiertage"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Medium, color = NothingWhite, fontSize = 13.sp)
                         }
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = NothingMutedGray)
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = NothingMutedGray, modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -445,10 +461,13 @@ fun HomeScreen(viewModel: UntisViewModel) {
 
         // Prompt user for smart assist chatbot shortcuts
         item {
+            val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color(0xFF333333)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { viewModel.currentScreen = "CHATBOT" }
@@ -461,23 +480,25 @@ fun HomeScreen(viewModel: UntisViewModel) {
                     Box(
                         modifier = Modifier
                             .size(44.dp)
-                            .background(NothingWhite, shape = CircleShape),
+                            .background(NothingRed.copy(alpha = 0.15f), shape = CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Face, contentDescription = null, tint = NothingBlack)
+                        Icon(Icons.Default.Face, contentDescription = null, tint = NothingRed)
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(StringResources.get("AI HAUSAUFGABEN HELFER"),
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp,
                             color = NothingWhite,
                             fontSize = 13.sp
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(StringResources.get("Fotografiere dein Buch oder Arbeitsblatt, um Hausaufgaben direkt einzutragen!"),
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             color = NothingMutedGray,
                             fontSize = 11.sp,
-                            lineHeight = 14.sp
+                            lineHeight = 15.sp
                         )
                     }
                 }
@@ -507,9 +528,18 @@ fun TimetableScreen(viewModel: UntisViewModel) {
     }
     
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(
-        initialPage = if (weeks.isNotEmpty()) weeks.indexOf(viewModel.selectedWeekStart).coerceAtLeast(0) else 0,
+        initialPage = 0,
         pageCount = { weeks.size.coerceAtLeast(1) }
     )
+
+    androidx.compose.runtime.LaunchedEffect(weeks, viewModel.selectedWeekStart) {
+        if (weeks.isNotEmpty()) {
+            val index = weeks.indexOf(viewModel.selectedWeekStart)
+            if (index in weeks.indices && pagerState.currentPage != index) {
+                pagerState.scrollToPage(index)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -597,7 +627,7 @@ fun TimetableScreen(viewModel: UntisViewModel) {
                 state = pagerState,
                 modifier = Modifier.weight(1f)
             ) { page ->
-                val currentWeekStart = weeks[page]
+                val currentWeekStart = weeks.getOrNull(page) ?: return@HorizontalPager
                 val filteredLessons = lessons.filter {
                     val date = sdf.parse(it.dateStr) ?: java.util.Date()
                     val cal = java.util.Calendar.getInstance()
@@ -749,8 +779,12 @@ fun MessagesScreen(viewModel: UntisViewModel) {
     var selectedTab by remember { mutableStateOf("INBOX") }
     var searchInput by remember { mutableStateOf("") }
 
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
     val inbox by viewModel.messagesInbox.collectAsState()
     val sent by viewModel.messagesSent.collectAsState()
+    val alerts by viewModel.notifications.collectAsState()
 
     val currentList = if (selectedTab == "INBOX") inbox else sent
     val filteredList = currentList.filter {
@@ -770,33 +804,75 @@ fun MessagesScreen(viewModel: UntisViewModel) {
         ) {
             NothingHeader(text = StringResources.get("Mitteilungen"), fontSize = 28.sp)
 
-            // Tabs toggle: Inbox, Sent, Drafts
+            // Tabs toggle: Inbox, Sent, Alerts
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                listOf("INBOX" to "Posteingang", "SENT" to "Gesendet").forEach { tabInfo ->
+                listOf(
+                    "INBOX" to "Posteingang",
+                    "SENT" to "Gesendet",
+                    "ALERTS" to "Alerts Log"
+                ).forEach { tabInfo ->
                     Button(
                         onClick = { selectedTab = tabInfo.first },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (selectedTab == tabInfo.first) NothingWhite else NothingCardGray,
                             contentColor = if (selectedTab == tabInfo.first) NothingBlack else NothingWhite
-                        )
+                        ),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                     ) {
-                        Text(tabInfo.second, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                        Text(
+                            text = tabInfo.second,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
 
-            // Search input field matching Untis screenshot
-            NothingTextField(
-                value = searchInput,
-                onValueChange = { searchInput = it },
-                label = StringResources.get("Inhalt oder Person suchen"),
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = NothingMutedGray) }
-            )
+            if (selectedTab == "ALERTS") {
+                // Actions banner for Notification Center
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "BENACHRICHTIGUNGEN VERLAUF",
+                        color = NothingMutedGray,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.sp
+                    )
+                    if (alerts.isNotEmpty()) {
+                        Text(
+                            text = "ALLE LÖSCHEN",
+                            color = NothingRed,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            modifier = Modifier
+                                .clickable { viewModel.clearNotifications() }
+                                .padding(4.dp)
+                        )
+                    }
+                }
+            } else {
+                // Search input field matching Untis screenshot
+                NothingTextField(
+                    value = searchInput,
+                    onValueChange = { searchInput = it },
+                    label = StringResources.get("Inhalt oder Person suchen"),
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = NothingMutedGray) }
+                )
+            }
         }
 
         // List Scroll
@@ -807,7 +883,83 @@ fun MessagesScreen(viewModel: UntisViewModel) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (filteredList.isEmpty()) {
+            if (selectedTab == "ALERTS") {
+                if (alerts.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(40.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(Icons.Default.Notifications, contentDescription = null, tint = NothingMutedGray, modifier = Modifier.size(48.dp))
+                            Text(
+                                text = "Keine Benachrichtigungen vorhanden.",
+                                fontFamily = FontFamily.SansSerif,
+                                color = NothingMutedGray,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(alerts) { alert ->
+                        Surface(
+                            color = NothingCardGray,
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, borderColor),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(if (alert.type == "HOMEWORK") NothingRed.copy(alpha = 0.15f) else NothingWhite.copy(alpha = 0.1f), shape = CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (alert.type == "HOMEWORK") Icons.Default.Edit else Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = if (alert.type == "HOMEWORK") NothingRed else NothingWhite,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = alert.title,
+                                        fontFamily = FontFamily.SansSerif,
+                                        fontWeight = FontWeight.Bold,
+                                        color = NothingWhite,
+                                        fontSize = 14.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = alert.message,
+                                        fontFamily = FontFamily.SansSerif,
+                                        color = NothingMutedGray,
+                                        fontSize = 12.sp,
+                                        lineHeight = 16.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    val sfd = SimpleDateFormat("dd. MMMM HH:mm", Locale.getDefault())
+                                    Text(
+                                        text = sfd.format(Date(alert.timestamp)),
+                                        fontFamily = FontFamily.Monospace,
+                                        color = NothingMutedGray.copy(alpha = 0.6f),
+                                        fontSize = 9.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (filteredList.isEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -902,6 +1054,7 @@ fun MessagesScreen(viewModel: UntisViewModel) {
                 }
             }
         }
+    }
 
         // Compose Message Floating button
         Box(
@@ -1003,6 +1156,8 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
     var showOnlyTodo by remember { mutableStateOf(false) }
 
     val filteredHw = homeworks.filter { if (showOnlyTodo) !it.isDone else true }
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
 
     Column(
         modifier = Modifier
@@ -1021,9 +1176,10 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(StringResources.get("Nur ungelöste Aufgaben"),
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Medium,
                     color = NothingWhite,
-                    fontSize = 13.sp
+                    fontSize = 14.sp
                 )
                 Switch(
                     checked = showOnlyTodo,
@@ -1054,7 +1210,7 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(StringResources.get("Sehr schön, keine Hausaufgaben ausstehend!"),
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             color = NothingMutedGray,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
@@ -1065,8 +1221,8 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                 items(filteredHw) { hw ->
                     Surface(
                         color = NothingCardGray,
-                        shape = RoundedCornerShape(24.dp), // modern 24.dp round
-                        border = BorderStroke(1.dp, Color(0xFF333333)), // updated border color
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, borderColor),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -1078,8 +1234,8 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                                 checked = hw.isDone,
                                 onCheckedChange = { viewModel.toggleHomeworkCompletion(hw) },
                                 colors = CheckboxDefaults.colors(
-                                    checkedColor = NothingRed, // Red active check state!
-                                    uncheckedColor = Color(0xFF333333),
+                                    checkedColor = NothingRed,
+                                    uncheckedColor = if (isDark) Color(0xFF333333) else Color(0xFFCCCCCC),
                                     checkmarkColor = NothingBlack
                                 )
                             )
@@ -1110,7 +1266,7 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                                         ) {
                                             Text(
                                                 text = StringResources.get("PRIVAT"),
-                                                fontFamily = FontFamily.Monospace,
+                                                fontFamily = FontFamily.SansSerif,
                                                 fontSize = 8.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = NothingRed
@@ -1121,16 +1277,16 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = hw.description,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontSize = 14.sp,
                                     color = if (hw.isDone) NothingMutedGray else NothingWhite,
                                     textDecoration = if (hw.isDone) TextDecoration.LineThrough else null
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "Fällig bis: ${hw.dueDate}",
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 11.sp,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontSize = 12.sp,
                                     color = NothingMutedGray
                                 )
                             }
@@ -1166,8 +1322,8 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
         Dialog(onDismissRequest = { viewModel.showAddHomeworkDialog = false }) {
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
@@ -1177,7 +1333,7 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(StringResources.get("EIGENE HAUSAUFGABE"),
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.Bold,
                         color = NothingWhite,
                         fontSize = 16.sp
@@ -1202,16 +1358,17 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                     )
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Button(
+                        OutlinedButton(
                             onClick = { viewModel.showAddHomeworkDialog = false },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = NothingWhite),
-                            border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
-                            modifier = Modifier.weight(1f)
+                            border = BorderStroke(1.dp, NothingWhite.copy(alpha = 0.25f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NothingWhite),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(44.dp)
                         ) {
-                            Text(StringResources.get("Abbrechen"), fontFamily = FontFamily.Monospace)
+                            Text(StringResources.get("Abbrechen"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         Button(
@@ -1223,9 +1380,10 @@ fun HomeworkScreen(viewModel: UntisViewModel) {
                                 )
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = NothingWhite, contentColor = NothingBlack),
-                            modifier = Modifier.weight(1f)
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(44.dp)
                         ) {
-                            Text(StringResources.get("Hinzufügen"), fontFamily = FontFamily.Monospace)
+                            Text(StringResources.get("Hinzufügen"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
                 }
@@ -1260,6 +1418,9 @@ fun GradesScreen(viewModel: UntisViewModel) {
         }
     }
 
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1274,8 +1435,8 @@ fun GradesScreen(viewModel: UntisViewModel) {
             // Dynamic Average Stats widget card
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -1286,11 +1447,13 @@ fun GradesScreen(viewModel: UntisViewModel) {
                     Column {
                         Text(
                             text = StringResources.get("NOTENSCHNITT"),
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.Bold,
                             color = NothingMutedGray,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            letterSpacing = 1.sp
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Ø $avgGradeStr",
                             fontFamily = FontFamily.Monospace,
@@ -1298,11 +1461,12 @@ fun GradesScreen(viewModel: UntisViewModel) {
                             color = NothingWhite,
                             fontSize = 32.sp
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = StringResources.get("Unter Berücksichtigung aller Gewichtungen"),
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             color = NothingMutedGray,
-                            fontSize = 10.sp
+                            fontSize = 11.sp
                         )
                     }
 
@@ -1310,10 +1474,15 @@ fun GradesScreen(viewModel: UntisViewModel) {
                     Button(
                         onClick = { selectedGradeScalePoints = !selectedGradeScalePoints },
                         colors = ButtonDefaults.buttonColors(containerColor = NothingWhite, contentColor = NothingBlack),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp)
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text(if (selectedGradeScalePoints) StringResources.get("0-15 PUNKTE") else StringResources.get("1-6 SCHULNOTEN"), fontFamily = FontFamily.Monospace, fontSize = 9.sp)
+                        Text(
+                            text = if (selectedGradeScalePoints) StringResources.get("0-15 PUNKTE") else StringResources.get("1-6 SCHULNOTEN"),
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp
+                        )
                     }
                 }
             }
@@ -1335,7 +1504,7 @@ fun GradesScreen(viewModel: UntisViewModel) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(StringResources.get("Noch keine Noten eingetragen."),
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             color = NothingMutedGray,
                             fontSize = 14.sp
                         )
@@ -1345,8 +1514,8 @@ fun GradesScreen(viewModel: UntisViewModel) {
                 items(grades) { g ->
                     Surface(
                         color = NothingCardGray,
-                        shape = RoundedCornerShape(24.dp), // modern 24.dp round
-                        border = BorderStroke(1.dp, Color(0xFF333333)), // updated border color
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, borderColor),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -1354,7 +1523,7 @@ fun GradesScreen(viewModel: UntisViewModel) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Box(
                                         modifier = Modifier
@@ -1364,22 +1533,23 @@ fun GradesScreen(viewModel: UntisViewModel) {
                                         Text(
                                             text = g.subjectCode,
                                             fontFamily = FontFamily.Monospace,
-                                            fontSize = 9.sp,
+                                            fontSize = 10.sp,
                                             color = NothingWhite,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
                                     Text(
                                         text = g.subjectName,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = FontFamily.SansSerif,
                                         fontWeight = FontWeight.Bold,
                                         color = NothingWhite,
-                                        fontSize = 14.sp
+                                        fontSize = 15.sp
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(text = g.description, fontFamily = FontFamily.Monospace, color = NothingMutedGray, fontSize = 12.sp)
-                                Text(text = "Gewicht: ${g.weight} | Datum: ${g.examDate}", fontFamily = FontFamily.Monospace, color = NothingMutedGray, fontSize = 10.sp)
+                                Text(text = g.description, fontFamily = FontFamily.SansSerif, color = NothingMutedGray, fontSize = 13.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(text = "Gewicht: ${g.weight} | Datum: ${g.examDate}", fontFamily = FontFamily.SansSerif, color = NothingMutedGray, fontSize = 11.sp)
                             }
 
                             Row(
@@ -1432,8 +1602,8 @@ fun GradesScreen(viewModel: UntisViewModel) {
         Dialog(onDismissRequest = { viewModel.showAddGradeDialog = false }) {
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
@@ -1443,7 +1613,7 @@ fun GradesScreen(viewModel: UntisViewModel) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(StringResources.get("NEUE NOTE EINTRAGEN"),
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.Bold,
                         color = NothingWhite,
                         fontSize = 16.sp
@@ -1486,16 +1656,17 @@ fun GradesScreen(viewModel: UntisViewModel) {
                     )
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Button(
+                        OutlinedButton(
                             onClick = { viewModel.showAddGradeDialog = false },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = NothingWhite),
-                            border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
-                            modifier = Modifier.weight(1f)
+                            border = BorderStroke(1.dp, NothingWhite.copy(alpha = 0.25f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NothingWhite),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(44.dp)
                         ) {
-                            Text(StringResources.get("Bestätigen"), fontFamily = FontFamily.Monospace)
+                            Text(StringResources.get("Bestätigen"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         Button(
@@ -1511,9 +1682,10 @@ fun GradesScreen(viewModel: UntisViewModel) {
                                 )
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = NothingWhite, contentColor = NothingBlack),
-                            modifier = Modifier.weight(1f)
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(44.dp)
                         ) {
-                            Text(StringResources.get("Eintragen"), fontFamily = FontFamily.Monospace)
+                            Text(StringResources.get("Eintragen"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
                 }
@@ -1527,6 +1699,33 @@ fun GradesScreen(viewModel: UntisViewModel) {
 @Composable
 fun ChatbotScreen(viewModel: UntisViewModel) {
     val context = LocalContext.current
+    var selectedImageState by remember { mutableStateOf<Bitmap?>(null) }
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            selectedImageState = bitmap
+            Toast.makeText(context, StringResources.get("Foto erfolgreich aufgenommen!"), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                selectedImageState = bitmap
+                Toast.makeText(context, StringResources.get("Screenshot aus Galerie ausgewählt!"), Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Fehler beim Laden des Bildes: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -1537,12 +1736,13 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            NothingHeader(text = StringResources.get("KI-Hausaufgaben"), fontSize = 28.sp)
-            Text(StringResources.get("Lade Hausaufgabenscreenshots hoch & die KI trägt sie strukturiert ein!"),
-                fontFamily = FontFamily.Monospace,
+            NothingHeader(text = StringResources.get("Neo Smart-Assistant"), fontSize = 28.sp)
+            Text(
+                text = StringResources.get("Stelle Fragen zum Unterricht, plane deinen Schultag oder fotografiere deine Hausaufgabe!"),
+                fontFamily = FontFamily.SansSerif,
                 color = NothingMutedGray,
-                fontSize = 11.sp,
-                lineHeight = 14.sp
+                fontSize = 12.sp,
+                lineHeight = 16.sp
             )
         }
 
@@ -1568,40 +1768,45 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
                         // Sender ID
                         Text(
                             text = chat.sender.uppercase(),
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.Bold,
                             color = if (isMe) NothingWhite else NothingRed,
                             fontSize = 9.sp,
-                            modifier = Modifier.padding(bottom = 2.dp)
+                            modifier = Modifier.padding(bottom = 2.dp),
+                            letterSpacing = 1.sp
                         )
 
                         Surface(
-                            color = if (isMe) NothingCardGray else Color(0xFF1E1E1E),
+                            color = if (isMe) NothingCardGray else (if (isDark) Color(0xFF151515) else Color(0xFFF1F5F9)),
                             shape = RoundedCornerShape(
                                 topStart = 16.dp,
                                 topEnd = 16.dp,
                                 bottomStart = if (isMe) 16.dp else 4.dp,
                                 bottomEnd = if (isMe) 4.dp else 16.dp
                             ),
-                            border = BorderStroke(1.dp, if (isMe) Color(0xFF3A3A3C) else Color(0xFF2C2C2E))
+                            border = BorderStroke(1.dp, borderColor)
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 if (chat.image != null) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(bottom = 6.dp)
-                                    ) {
-                                        Icon(Icons.Default.Face, contentDescription = null, tint = NothingMutedGray, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text("[Screenshot hochgeladen]", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = NothingMutedGray)
-                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Image(
+                                        bitmap = chat.image.asImageBitmap(),
+                                        contentDescription = "Uploaded image",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 180.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(12.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
                                 }
                                 Text(
                                     text = chat.text,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = FontFamily.SansSerif,
                                     color = NothingWhite,
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp
+                                    fontSize = 13.sp,
+                                    lineHeight = 19.sp
                                 )
                             }
                         }
@@ -1617,8 +1822,8 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
                     ) {
                         Surface(
                             color = NothingCardGray,
-                            shape = RoundedCornerShape(24.dp), // modern 24.dp round
-                            border = BorderStroke(1.dp, Color(0xFF333333)) // updated border color
+                            shape = RoundedCornerShape(20.dp),
+                            border = BorderStroke(1.dp, borderColor)
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
@@ -1626,7 +1831,7 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 CircularProgressIndicator(modifier = Modifier.size(12.dp), color = NothingWhite, strokeWidth = 2.dp)
-                                Text(StringResources.get("Analysiere Hausaufgaben mit Gemini..."), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = NothingWhite)
+                                Text(StringResources.get("Analysiere mit Gemini AI..."), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = NothingWhite)
                             }
                         }
                     }
@@ -1634,58 +1839,117 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
             }
         }
 
-        // Input entry bar + Screenshot Simulator selector
+        // Selected Image pre-send preview
+        selectedImageState?.let { img ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .background(NothingCardGray, RoundedCornerShape(12.dp))
+                    .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(12.dp))
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    bitmap = img.asImageBitmap(),
+                    contentDescription = "Pre-send preview",
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = StringResources.get("Foto angehängt und bereit zum Absenden!"),
+                    color = NothingWhite,
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { selectedImageState = null }) {
+                    Icon(Icons.Default.Close, contentDescription = "Löschen", tint = NothingRed)
+                }
+            }
+        }
+
+        // Input entry bar
         Surface(
             color = NothingCardGray,
-            border = BorderStroke(1.dp, Color(0xFF333333)), // updated border color
+            border = BorderStroke(1.dp, borderColor),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 // Interactive helper shortcuts triggers
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(bottom = 6.dp),
+                        .padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Quick Action: S.124
                     Button(
                         onClick = {
                             viewModel.activeChatInput = "Mathe Hausaufgabe S.124 Nr. 1-4 bis Montag eintragen"
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NothingDarkGray),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0)),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        Text("Mathe S.124", fontFamily = FontFamily.Monospace, fontSize = 9.sp, color = NothingWhite)
+                        Text("📝 Mathe S.124 eintragen", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = NothingWhite)
                     }
 
+                    // Quick Action: Homework Overview
                     Button(
                         onClick = {
-                            // Simulate upload of a textbook screenshot
-                            Toast.makeText(context, StringResources.get("Screenshot aus Galerie ausgewählt!"), Toast.LENGTH_SHORT).show()
-                            // Pass mock bitmap of drawing representatively
-                            val width = 100
-                            val height = 100
-                            val conf = Bitmap.Config.ARGB_8888
-                            val mockBitmap = Bitmap.createBitmap(width, height, conf)
-                            viewModel.sendChatPrompt("Lese diese Chemie Hausaufgabe aus dem Foto aus", mockBitmap)
+                            viewModel.activeChatInput = "Welche Hausaufgaben habe ich aktuell auf?"
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NothingDarkGray),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0)),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        Icon(Icons.Default.Face, contentDescription = null, modifier = Modifier.size(12.dp), tint = NothingRed)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(StringResources.get("MOCK SCREENSHOT HOCHLADEN"), fontFamily = FontFamily.Monospace, fontSize = 9.sp, color = NothingWhite)
+                        Text("📋 Hausaufgaben abfragen", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = NothingWhite)
+                    }
+
+                    // Quick Action: Timetable Overview
+                    Button(
+                        onClick = {
+                            viewModel.activeChatInput = "Was habe ich diese Woche für Fächer laut meinem Stundenplan?"
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0)),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text("🗓️ Stundenplan abfragen", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = NothingWhite)
                     }
                 }
 
+                // Media Source & Send Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Custom style button to open real camera
+                    Button(
+                        onClick = { cameraLauncher.launch(null) },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0)),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text("📸 KAMERA", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = NothingWhite)
+                    }
+
+                    // Custom style button to choose from gallery
+                    Button(
+                        onClick = { galleryLauncher.launch("image/*") },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0)),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text("📁 GALERIE", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = NothingWhite)
+                    }
+
                     NothingTextField(
                         value = viewModel.activeChatInput,
                         onValueChange = { viewModel.activeChatInput = it },
@@ -1693,8 +1957,9 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
                         modifier = Modifier.weight(1f),
                         trailingIcon = {
                             IconButton(onClick = {
-                                if (viewModel.activeChatInput.isNotEmpty()) {
-                                    viewModel.sendChatPrompt(viewModel.activeChatInput, null)
+                                if (viewModel.activeChatInput.isNotEmpty() || selectedImageState != null) {
+                                    viewModel.sendChatPrompt(viewModel.activeChatInput, selectedImageState)
+                                    selectedImageState = null // Clear preview after sending
                                 }
                             }) {
                                 Icon(Icons.Default.Send, contentDescription = StringResources.get("Senden"), tint = NothingWhite)
@@ -1721,6 +1986,8 @@ fun SettingsScreen(viewModel: UntisViewModel) {
 
     val context = LocalContext.current
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
 
     LazyColumn(
         modifier = Modifier
@@ -1737,12 +2004,12 @@ fun SettingsScreen(viewModel: UntisViewModel) {
         item {
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(StringResources.get("Sprache / Language"), fontFamily = FontFamily.Monospace, color = NothingMutedGray, fontSize = 11.sp)
+                    Text(StringResources.get("Sprache / Language"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, color = NothingMutedGray, fontSize = 11.sp, letterSpacing = 1.sp)
 
                     SettingsToggleRow(
                         title = "English UI",
@@ -1753,7 +2020,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         }
                     )
                     
-                    HorizontalDivider(color = Color(0xFFE5E5E5))
+                    HorizontalDivider(color = borderColor)
                     
                     SettingsToggleRow(
                         title = "Stock Android Theme",
@@ -1768,16 +2035,104 @@ fun SettingsScreen(viewModel: UntisViewModel) {
             }
         }
 
+        // Notifications Management Section
+        item {
+            Surface(
+                color = NothingCardGray,
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "BENACHRICHTIGUNGEN & ALERTS",
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingMutedGray,
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp
+                    )
+
+                    SettingsToggleRow(
+                        title = "Hausaufgaben-Meldungen",
+                        desc = "Echtzeit-Alerts für fällige und eingetragene Hausaufgaben",
+                        checked = viewModel.homeworkNotificationsEnabled,
+                        onCheckedChange = {
+                            viewModel.homeworkNotificationsEnabled = it
+                            viewModel.saveAppSettings()
+                        }
+                    )
+
+                    HorizontalDivider(color = borderColor)
+
+                    SettingsToggleRow(
+                        title = "Stundenplan-Änderungen",
+                        desc = "Sofort-Meldungen bei Vertretungen, Ausfällen und Raumwechseln",
+                        checked = viewModel.timetableNotificationsEnabled,
+                        onCheckedChange = {
+                            viewModel.timetableNotificationsEnabled = it
+                            viewModel.saveAppSettings()
+                        }
+                    )
+
+                    HorizontalDivider(color = borderColor)
+
+                    Text(
+                        text = "SIMULATOR FÜR SYSTEM-MELDUNGEN",
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingMutedGray,
+                        fontSize = 10.sp,
+                        letterSpacing = 0.5.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                viewModel.triggerHomeworkTestAlert()
+                                Toast.makeText(context, "Hausaufgaben-Alert simuliert!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0), contentColor = NothingWhite),
+                            border = BorderStroke(1.dp, borderColor),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("HW Testen", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                viewModel.triggerTimetableTestAlert()
+                                Toast.makeText(context, "Plan Testen", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE2E8F0), contentColor = NothingWhite),
+                            border = BorderStroke(1.dp, borderColor),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("Plan Testen", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+        }
+
         // Credentials Section
         item {
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(StringResources.get("API & VERBINDUNG"), fontFamily = FontFamily.Monospace, color = NothingMutedGray, fontSize = 11.sp)
+                    Text(StringResources.get("API & VERBINDUNG"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, color = NothingMutedGray, fontSize = 11.sp, letterSpacing = 1.sp)
 
                     NothingTextField(
                         value = viewModel.geminiApiKeyInput,
@@ -1807,12 +2162,12 @@ fun SettingsScreen(viewModel: UntisViewModel) {
         item {
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFF2C2C2E)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(StringResources.get("STUNDENPLAN ANSICHT"), fontFamily = FontFamily.Monospace, color = NothingMutedGray, fontSize = 11.sp)
+                    Text(StringResources.get("STUNDENPLAN ANSICHT"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, color = NothingMutedGray, fontSize = 11.sp, letterSpacing = 1.sp)
 
                     SettingsToggleRow(
                         title = "Lehrernamen ausschreiben",
@@ -1821,7 +2176,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         onCheckedChange = { showComplateTeachers = it }
                     )
 
-                    Divider(color = Color(0xFF2C2C2E))
+                    HorizontalDivider(color = borderColor)
 
                     SettingsToggleRow(
                         title = "Fachnamen ausschreiben",
@@ -1830,7 +2185,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         onCheckedChange = { showComplateSubjects = it }
                     )
 
-                    Divider(color = Color(0xFF2C2C2E))
+                    HorizontalDivider(color = borderColor)
 
                     SettingsToggleRow(
                         title = "Fachfarben anzeigen",
@@ -1839,7 +2194,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         onCheckedChange = { useColorsOfSubject = it }
                     )
 
-                    Divider(color = Color(0xFF2C2C2E))
+                    HorizontalDivider(color = borderColor)
 
                     SettingsToggleRow(
                         title = "Vertretungskennzeichnung",
@@ -1848,7 +2203,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         onCheckedChange = { representationChanges = it }
                     )
 
-                    Divider(color = Color(0xFF2C2C2E))
+                    HorizontalDivider(color = borderColor)
 
                     SettingsToggleRow(
                         title = "Entfälle anzeigen",
@@ -1857,7 +2212,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         onCheckedChange = { showCancellationsState = it }
                     )
 
-                    Divider(color = Color(0xFF2C2C2E))
+                    HorizontalDivider(color = borderColor)
 
                     SettingsToggleRow(
                         title = "Räume einblenden",
@@ -1866,7 +2221,7 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                         onCheckedChange = { showClassRooms = it }
                     )
 
-                    Divider(color = Color(0xFF2C2C2E))
+                    HorizontalDivider(color = borderColor)
 
                     SettingsToggleRow(
                         title = "Farben aus WebUntis",
@@ -1881,23 +2236,26 @@ fun SettingsScreen(viewModel: UntisViewModel) {
         item {
             Surface(
                 color = NothingCardGray,
-                shape = RoundedCornerShape(20.dp),
-                border = BorderStroke(1.dp, Color(0xFFE5E5E5)),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
                         text = StringResources.get("ICS KALENDERABONNEMENT"),
-                        fontSize = 12.sp,
-                        color = NothingWhite
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingMutedGray,
+                        letterSpacing = 1.sp
                     )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
                             onClick = {
@@ -1905,24 +2263,24 @@ fun SettingsScreen(viewModel: UntisViewModel) {
                                 Toast.makeText(context, StringResources.get("Stundenplan lokal als ICS exportiert (Cache)!"), Toast.LENGTH_SHORT).show()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = NothingWhite, contentColor = NothingBlack),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f)
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.weight(1f).height(40.dp)
                         ) {
-                            Text(StringResources.get("ICS DATEI EXPORT"), fontSize = 11.sp)
+                            Text(StringResources.get("ICS DATEI EXPORT"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
 
-                        Button(
+                        OutlinedButton(
                             onClick = {
                                 val link = viewModel.getIcsCalendarSubscriptionLink()
                                 clipboard.setText(AnnotatedString(link))
                                 Toast.makeText(context, StringResources.get("ICS Link in die Zwischenablage kopiert! Trage diesen im Google Kalender ein."), Toast.LENGTH_LONG).show()
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = NothingWhite),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE5E5E5)),
-                            modifier = Modifier.weight(1f)
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NothingWhite),
+                            shape = RoundedCornerShape(20.dp),
+                            border = BorderStroke(1.dp, NothingWhite.copy(alpha = 0.25f)),
+                            modifier = Modifier.weight(1f).height(40.dp)
                         ) {
-                            Text(StringResources.get("ICS LINK KOPIEREN"), fontSize = 11.sp)
+                            Text(StringResources.get("ICS LINK KOPIEREN"), fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
                     }
                 }

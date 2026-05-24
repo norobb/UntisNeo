@@ -20,12 +20,21 @@ class WebUntisApi {
     private val cookieJar = object : CookieJar {
         private val cookies = mutableListOf<Cookie>()
         override fun saveFromResponse(url: HttpUrl, newCookies: List<Cookie>) {
-            cookies.clear()
-            cookies.addAll(newCookies)
+            if (newCookies.isNotEmpty()) {
+                val newNames = newCookies.map { it.name }.toSet()
+                synchronized(cookies) {
+                    cookies.removeAll { old -> newNames.contains(old.name) }
+                    cookies.addAll(newCookies)
+                }
+            }
         }
 
         override fun loadForRequest(url: HttpUrl): List<Cookie> {
-            return cookies
+            val now = System.currentTimeMillis()
+            synchronized(cookies) {
+                cookies.removeAll { it.expiresAt < now }
+                return cookies.filter { it.matches(url) }
+            }
         }
     }
 
@@ -54,7 +63,22 @@ class WebUntisApi {
         pass: String
     ): List<com.example.data.room.TimetableLesson>? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         try {
-            val cleanServerUrl = serverUrl.replace("https://", "").replace("http://", "").trimEnd('/')
+            var cleanServerUrl = serverUrl.trim()
+            if (cleanServerUrl.startsWith("http://") || cleanServerUrl.startsWith("https://")) {
+                try {
+                    val uri = java.net.URI(cleanServerUrl)
+                    val host = uri.host
+                    if (host != null && host.isNotEmpty()) {
+                        cleanServerUrl = host
+                    }
+                } catch (e: Exception) {
+                    // fall back to string cleaning
+                }
+            }
+            cleanServerUrl = cleanServerUrl.replace("https://", "").replace("http://", "").trimEnd('/')
+            if (cleanServerUrl.contains("/")) {
+                cleanServerUrl = cleanServerUrl.split("/")[0]
+            }
             Log.d("WebUntisApi", "Starting sync. Server: $cleanServerUrl, School: $school")
             val schoolEnc = java.net.URLEncoder.encode(school, "UTF-8").replace("+", "%20")
             val baseUrl = "https://$cleanServerUrl/WebUntis/jsonrpc.do?school=$schoolEnc"
@@ -77,32 +101,38 @@ class WebUntisApi {
                 .build()
 
             val authResponse = client.newCall(authRequest).execute()
-            if (!authResponse.isSuccessful) return@withContext null
-            val authBody = authResponse.body?.string() ?: return@withContext null
+            if (!authResponse.isSuccessful) {
+                throw Exception("HTTP-Fehler ${authResponse.code} bei der Anmeldung")
+            }
+            val authBody = authResponse.body?.string() ?: throw Exception("Leere Antwort bei der Anmeldung")
             val authJson = JSONObject(authBody)
             if (authJson.has("error")) {
-                Log.e("WebUntisApi", "Auth error: ${authJson.get("error")}")
-                return@withContext null
+                val errorObj = authJson.optJSONObject("error")
+                val errMsg = errorObj?.optString("message") ?: "Unbekannter Fehler"
+                if (errMsg.lowercase().contains("bad credentials") || errMsg.lowercase().contains("invalid")) {
+                    throw Exception("Falsche Zugangsdaten (Benutzername, Passwort oder Schule)")
+                } else {
+                    throw Exception("WebUntis Server-Fehler: $errMsg")
+                }
             }
             
-            val authResult = authJson.getJSONObject("result")
-            val personType = authResult.getInt("personType")
-            val personId = authResult.getInt("personId")
+            val authResult = authJson.optJSONObject("result") ?: throw Exception("Fehlerhafte Antwort vom WebUntis Server erhalten")
+            val personType = authResult.optInt("personType", 0)
+            val personId = authResult.optInt("personId", 0)
 
             // 2. Fetch dependencies (Subjects, Rooms, Teachers)
             val subjectsMap = fetchMap(baseUrl, "getSubjects")
             val roomsMap = fetchMap(baseUrl, "getRooms")
             val teachersMap = fetchMap(baseUrl, "getTeachers")
 
-            // 3. Fetch Timetable for this week and surrounding weeks (-2 to +4)
+            // 3. Fetch Timetable for exactly 31 days starting from Monday of last week
             val sdf = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
             val cal = Calendar.getInstance()
             cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-            cal.add(Calendar.WEEK_OF_YEAR, -2) // Fetch from 2 weeks ago
+            cal.add(Calendar.DAY_OF_YEAR, -7) // Start from Monday of last week
             val startDate = sdf.format(cal.time).toInt()
             
-            cal.add(Calendar.WEEK_OF_YEAR, 6) // Fetch up to 4 weeks in future (total 6 weeks range)
-            cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+            cal.add(Calendar.DAY_OF_YEAR, 30) // Add 30 days for exactly 31 days range
             val endDate = sdf.format(cal.time).toInt()
 
             Log.d("WebUntisApi", "Fetching timetable from $startDate to $endDate")
@@ -132,10 +162,17 @@ class WebUntisApi {
                 .build()
 
             val ttResponse = client.newCall(ttRequest).execute()
-            val ttBody = ttResponse.body?.string() ?: return@withContext null
+            if (!ttResponse.isSuccessful) {
+                throw Exception("HTTP-Fehler ${ttResponse.code} bei der Stundenplan-Abfrage")
+            }
+            val ttBody = ttResponse.body?.string() ?: throw Exception("Leere Antwort bei der Stundenplan-Abfrage")
             val ttJson = JSONObject(ttBody)
             
-            if (ttJson.has("error")) return@withContext null
+            if (ttJson.has("error")) {
+                val errorObj = ttJson.optJSONObject("error")
+                val errMsg = errorObj?.optString("message") ?: "Unbekannter Server-Fehler"
+                throw Exception("Fehler bei Stundenplan-Abfrage: $errMsg")
+            }
             
             val ttArray = ttJson.getJSONArray("result")
             val lessons = mutableListOf<com.example.data.room.TimetableLesson>()
@@ -246,7 +283,14 @@ class WebUntisApi {
 
         } catch (e: Exception) {
             Log.e("WebUntisApi", "Exception in API: ${e.localizedMessage}", e)
-            return@withContext null
+            val friendlyMsg = when {
+                e.message?.startsWith("HTTP-Fehler") == true || e.message?.startsWith("WebUntis") == true || e.message?.startsWith("Falsche Zugangsdaten") == true || e.message?.startsWith("Fehler bei Stundenplan-Abfrage") == true -> e.message!!
+                e is java.net.UnknownHostException || e.localizedMessage?.contains("Unable to resolve host") == true -> "Der Server ist nicht erreichbar. Bitte überprüfe die Server-Adresse und deine Internetverbindung."
+                e is java.net.SocketTimeoutException || e.localizedMessage?.contains("timeout") == true -> "Verbindung zeitüberschritten. Der WebUntis-Server antwortet zurzeit nicht."
+                e is java.io.IOException -> "Netzwerkfehler: ${e.localizedMessage ?: "Verbindung abgebrochen"}"
+                else -> "Fehler: ${e.localizedMessage ?: "Unbekannter Fehler bei der Synchronisation"}"
+            }
+            throw Exception(friendlyMsg, e)
         }
     }
 

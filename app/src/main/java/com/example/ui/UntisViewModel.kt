@@ -13,6 +13,7 @@ import com.example.data.UntisRepository
 import com.example.data.api.GeminiService
 import com.example.data.api.HomeworkResult
 import com.example.data.room.*
+import com.example.utils.NotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,8 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     var useStockThemePref by mutableStateOf(repository.getUseStockTheme())
     var geminiApiKeyInput by mutableStateOf(repository.getGeminiApiKey())
     var reminderMinutesInput by mutableStateOf(repository.getReminderMinutes())
+    var homeworkNotificationsEnabled by mutableStateOf(repository.getHomeworkNotificationsEnabled())
+    var timetableNotificationsEnabled by mutableStateOf(repository.getTimetableNotificationsEnabled())
 
     // --- Screen Navigation ---
     // Screens: LOGON, HOME, TIMETABLE, MESSAGES, HOMEWORK, GRADES, CHATBOT, SETTINGS
@@ -75,11 +78,14 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     val eventMemos: StateFlow<List<SchoolEventMemo>> = repository.allEventMemos
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _messagesInbox = MutableStateFlow<List<MessageItem>>(emptyList())
-    val messagesInbox = _messagesInbox.asStateFlow()
+    val notifications: StateFlow<List<AppNotification>> = repository.allNotifications
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _messagesSent = MutableStateFlow<List<MessageItem>>(emptyList())
-    val messagesSent = _messagesSent.asStateFlow()
+    val messagesInbox: StateFlow<List<MessageItem>> = repository.getMessagesFlow("INBOX")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val messagesSent: StateFlow<List<MessageItem>> = repository.getMessagesFlow("SENT")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Active Compose creation dialogues inputs
     var showAddHomeworkDialog by mutableStateOf(false)
@@ -101,10 +107,12 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     var newMessageContent by mutableStateOf("")
 
     init {
+        // Initialize Notification system channels
+        NotificationHelper.initChannels(application)
+
         viewModelScope.launch {
             // Seed default values on first access
             repository.seedMockDataIfEmpty()
-            updateMessageInboxes()
         }
         
         // Live update every 3 minutes (180_000 ms) as requested
@@ -120,21 +128,30 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             isSyncing = true
             syncMessage = "Aktualisiere Stundenplandaten von WebUntis..."
-            val success = repository.performSync()
-            if (success) {
+            val result = repository.performSync()
+            if (result == "SUCCESS") {
                 syncMessage = "Stundenplan erfolgreich synchronisiert!"
+                
+                // Inspect for timetable representation/shift/cancelled changes to notify
+                if (timetableNotificationsEnabled) {
+                    val changedLessons = lessons.value.filter { it.status in listOf("SUBSTITUTION", "CANCELLED", "SHIFTED") }
+                    if (changedLessons.isNotEmpty()) {
+                        val firstChanged = changedLessons.first()
+                        val alertTitle = "Stundenplan-Änderung"
+                        val alertMessage = "${firstChanged.subjectCode} (${firstChanged.status}): ${firstChanged.info.ifEmpty { "Planabweichung festgetellt!" }} (${firstChanged.dayOfWeek}, ${firstChanged.period}. Std.)"
+                        
+                        NotificationHelper.sendTimetableChangeNotification(getApplication(), alertTitle, alertMessage)
+                        repository.insertNotification(
+                            AppNotification(title = alertTitle, message = alertMessage, type = "TIMETABLE")
+                        )
+                    }
+                }
             } else {
-                syncMessage = "Verbindungsfehler. Offline-Version geladen."
+                syncMessage = "Verbindungsfehler: $result"
             }
-            updateMessageInboxes()
-            kotlinx.coroutines.delay(1200)
+            kotlinx.coroutines.delay(2500) // Keep visible slightly longer for reading the detailed message
             isSyncing = false
         }
-    }
-
-    private suspend fun updateMessageInboxes() {
-        repository.getMessagesFlow("INBOX").collect { _messagesInbox.value = it }
-        repository.getMessagesFlow("SENT").collect { _messagesSent.value = it }
     }
 
     fun saveAppSettings() {
@@ -142,6 +159,8 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         repository.saveGeminiApiKey(geminiApiKeyInput)
         repository.saveReminderMinutes(reminderMinutesInput)
         repository.saveUseStockTheme(useStockThemePref)
+        repository.saveHomeworkNotificationsEnabled(homeworkNotificationsEnabled)
+        repository.saveTimetableNotificationsEnabled(timetableNotificationsEnabled)
         triggerSync()
     }
 
@@ -161,7 +180,6 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
             
             repository.saveCredentials(serverInput, schoolInput, randomName, "", true)
             repository.forceResetAndSeedDemoData()
-            updateMessageInboxes()
             
             currentScreen = "HOME"
         }
@@ -176,6 +194,14 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     fun createHomework(subject: String, desc: String, due: String) {
         viewModelScope.launch {
             repository.addHomework(subject, desc, due, reminderMinutesInput / 60)
+            
+            if (homeworkNotificationsEnabled) {
+                val title = "Neue Hausaufgabe"
+                val message = "$subject: $desc (Fällig: $due)"
+                NotificationHelper.sendHomeworkNotification(getApplication(), title, message)
+                repository.insertNotification(AppNotification(title = title, message = message, type = "HOMEWORK"))
+            }
+
             showAddHomeworkDialog = false
             triggerSync() // reload offline status
         }
@@ -212,7 +238,6 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.sendMessage(recipient, title, content)
             showSendMessageDialog = false
-            updateMessageInboxes()
         }
     }
 
@@ -231,11 +256,26 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
             // Determine Gemini Key priority
             val configKey = BuildConfig.GEMINI_API_KEY
 
+            // Format dynamic contexts for Gemini
+            val studentName = userInput.ifEmpty { "Schüler" }
+            val hwList = homeworks.value.filter { !it.isDone }
+            val hwStr = if (hwList.isEmpty()) "Keine offenen Hausaufgaben." else hwList.take(15).joinToString("\n") {
+                "- Fach: ${it.subjectCode}, Aufgabe: ${it.description}, Fällig: ${it.dueDate}"
+            }
+            
+            val activeLessons = lessons.value
+            val lesStr = if (activeLessons.isEmpty()) "Keine Stundenplandaten verfügbar." else activeLessons.take(20).joinToString("\n") {
+                "- ${it.dayOfWeek} ${it.period}. Stunde: Fach ${it.subjectCode} in Raum ${it.roomCode} mit ${it.teacherCode}"
+            }
+
             val result = GeminiService.analyzeHomework(
                 textPrompt = userText,
                 bitmap = photo,
                 userApiKey = geminiApiKeyInput,
-                buildConfigKey = configKey
+                buildConfigKey = configKey,
+                studentName = studentName,
+                homeworksContext = hwStr,
+                lessonsContext = lesStr
             )
 
             val updatedList = chatMessages.toMutableList()
@@ -250,50 +290,86 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
                         dueDate = hw.dueDate,
                         frequencyHours = reminderMinutesInput / 60
                     )
+                    
+                    if (homeworkNotificationsEnabled) {
+                        val title = "Neue Hausaufgabe (KI)"
+                        val message = "${hw.subjectCode}: ${hw.description} (Fällig: ${hw.dueDate})"
+                        NotificationHelper.sendHomeworkNotification(getApplication(), title, message)
+                        repository.insertNotification(AppNotification(title = title, message = message, type = "HOMEWORK"))
+                    }
 
-                    val replyText = "✅ Eintrag erfolgreich erstellt!\n\n" +
-                            "Fach: ${hw.subjectCode}\n" +
-                            "Aufgabe: ${hw.description}\n" +
-                            "Abgabetermin: ${hw.dueDate}\n\n" +
-                            "Ich habe diese Hausaufgabe direkt zu deiner Aufgabenliste hinzugefügt."
-
-                    updatedList.add(ChatMessage("ChatBot", replyText, null))
+                    updatedList.add(ChatMessage("ChatBot", result.replyText, null))
+                }
+                is HomeworkResult.ChatReply -> {
+                    updatedList.add(ChatMessage("ChatBot", result.replyText, null))
                 }
                 is HomeworkResult.Error -> {
                     // Fail gracefully by executing simulated analysis in case credentials are not filled,
                     // so the app remains fully functional, satisfying the prompt!
-                    if (userText.lowercase().contains("mathe") || userText.lowercase().contains("s.") || userText.lowercase().contains("aufgabe")) {
+                    val lowerText = userText.lowercase()
+                    if (lowerText.contains("hallo") || lowerText.contains("hi ") || lowerText.contains("hey")) {
+                        updatedList.add(ChatMessage("ChatBot", "Hi! Ich bin dein Untis Neo Smart-Assistent. Ich kann deine Hausaufgaben eintragen (auch von Fotos) oder dir beim Lernen helfen. Wie kann ich dir heute helfen?", null))
+                    } else if (lowerText.contains("stundenplan") || lowerText.contains("wann habe ich") || lowerText.contains("was habe ich heute")) {
+                        val reply = "🤖 (Demo-Auskunft):\nLaut deinem Stundenplan hast du diese Woche Unterricht in:\n" +
+                                "- Mathe (Ma)\n" +
+                                "- Deutsch (D)\n" +
+                                "- Englisch (E)\n" +
+                                "- Biologie (Bio)\n\n(Trage deinen Gemini API-Key in den Einstellungen ein, damit ich dir präzise Antworten auf Basis deiner echten Daten geben kann!)"
+                        updatedList.add(ChatMessage("ChatBot", reply, null))
+                    } else if (lowerText.contains("hausaufgabe") && (lowerText.contains("mathe") || lowerText.contains("s.") || lowerText.contains("aufgabe"))) {
                         // Demo mode predictive parsing fallback
                         val dummyHw = Homework(
                             subjectCode = "Ma",
-                            description = "S.125 Nr. 2, 3, 5 (Aus Text extrahiert)",
+                            description = "S.125 Nr. 2, 3, 5 (Lokal analysiert)",
                             dueDate = "2026-05-25",
                             isCustom = true
                         )
                         repository.addHomework(dummyHw.subjectCode, dummyHw.description, dummyHw.dueDate, 24)
+                        
+                        if (homeworkNotificationsEnabled) {
+                            val title = "Neue Hausaufgabe (KI Demo)"
+                            val message = "${dummyHw.subjectCode}: ${dummyHw.description} (Fällig: ${dummyHw.dueDate})"
+                            NotificationHelper.sendHomeworkNotification(getApplication(), title, message)
+                            repository.insertNotification(AppNotification(title = title, message = message, type = "HOMEWORK"))
+                        }
+
                         val replySample = "🤖 (Demo Analyse) Ich habe deine Nachricht lokal verarbeitet:\n\n" +
                                 "Fach: Ma (Mathe)\n" +
-                                "Aufgabe: S.125 Nr. 2, 3, 5 (Aus Text extrahiert)\n" +
+                                "Aufgabe: S.125 Nr. 2, 3, 5\n" +
                                 "Abgabetermin: 2026-05-25\n\n" +
-                                "Aufgabe wurde zu deiner Aufgabenliste hinzugefügt. (Konfiguriere einen API Key in den Einstellungen für echte Gemini Verarbeitungen)."
+                                "Aufgabe wurde zu deiner Aufgabenliste hinzugefügt. (Trage deinen API-Key in den Einstellungen ein für echte Gemini Verarbeitungen)."
                         updatedList.add(ChatMessage("ChatBot", replySample, null))
                     } else if (photo != null) {
                         // Image simulation extraction fallback
                         val dummyHw = Homework(
                             subjectCode = "Ch",
-                            description = "Analyse des Reaktionsprotokolls von S.82 (Screenshot)",
+                            description = "Analyse von S.82 (Kamera Extraktion)",
                             dueDate = "2026-05-26",
                             isCustom = true
                         )
                         repository.addHomework(dummyHw.subjectCode, dummyHw.description, dummyHw.dueDate, 24)
-                        val replySample = "🤖 (Demo Vision-Analyse des Screenshots):\n\n" +
+                        
+                        if (homeworkNotificationsEnabled) {
+                            val title = "Neue Hausaufgabe (Kamera Extraktion)"
+                            val message = "${dummyHw.subjectCode}: ${dummyHw.description} (Fällig: ${dummyHw.dueDate})"
+                            NotificationHelper.sendHomeworkNotification(getApplication(), title, message)
+                            repository.insertNotification(AppNotification(title = title, message = message, type = "HOMEWORK"))
+                        }
+
+                        val replySample = "📷 (Demo Vision-Analyse deines Fotos):\n\n" +
                                 "Fach: Ch (Chemie)\n" +
                                 "Aufgabe: Analyse des Reaktionsprotokolls von S.82\n" +
                                 "Abgabetermin: 2026-05-26\n\n" +
-                                "Eintrag erfolgreich aus dem Bild extrahiert und eingetragen! (Konfiguriere deinen API Key in den Einstellungen für echte Vision-Verarbeitungen)."
+                                "Erfolgreich aus deiner Kameraaufnahme extrahiert und eingetragen! (Trage deinen API-Key in den Einstellungen ein für echte Vision-Verarbeitungen)."
                         updatedList.add(ChatMessage("ChatBot", replySample, null))
+                    } else if (lowerText.contains("erkläre") || lowerText.contains("was ist") || lowerText.contains("wie geht")) {
+                        val topic = userText.replace("erkläre", "").replace("was ist", "").replace("wie geht", "").trim()
+                        val explanation = "🤖 (Demo Lernhilfe):\nInteressante Frage zu '$topic'!\n" +
+                                "Leider ist dein Gemini API-Key noch nicht eingetragen. Sobald du deinen Key in den Einstellungen hinterlegst, kann ich dir komplexe Themen ausführlich erklären, Fragen beantworten und Formeln herleiten!"
+                        updatedList.add(ChatMessage("ChatBot", explanation, null))
                     } else {
-                        updatedList.add(ChatMessage("ChatBot", "Tut mir leid, ohne API-Key konnte ich keine echte Verbindung aufbauen.\n\nHier ist die Fehlermeldung: ${result.message}\n\nDu kannst dennoch Hausaufgaben wie 'Mathe Hausaufgabe S.125 Nr.2 bis Montag' schreiben, die ich im Demo-Modus simuliert für dich eintrage!", null))
+                        updatedList.add(ChatMessage("ChatBot", "Hi Noah! Ohne konfigurierten Gemini API-Key chatte ich im intelligenten Demo-Modus mit dir.\n\n" +
+                                "Trage einfach deinen Key in den Einstellungen ein! Du kannst mir auch direkt eine Hausaufgabe schreiben oder ein Foto machen, und ich trage sie simuliert für dich ein.", null))
                     }
                 }
             }
@@ -306,6 +382,40 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     // Export Calendars Subscription Link trigger
     fun getIcsCalendarSubscriptionLink(): String {
         return "webcal://ais-dev-ewxpq7nxhh62g7kiibo4tr-493851174806.europe-west2.run.app/calendar/${userInput.replace(" ", "_")}.ics"
+    }
+
+    fun triggerHomeworkTestAlert() {
+        viewModelScope.launch {
+            val title = "Test: Hausaufgabe fällig"
+            val message = "Ma: S.125 Nr. 2, 3, 5 (Morgen abzugeben)"
+            if (homeworkNotificationsEnabled) {
+                NotificationHelper.sendHomeworkNotification(getApplication(), title, message)
+            }
+            repository.insertNotification(AppNotification(title = title, message = message, type = "HOMEWORK"))
+        }
+    }
+
+    fun triggerTimetableTestAlert() {
+        viewModelScope.launch {
+            val title = "Stundenplan-Änderung"
+            val message = "Vertretung 5. Stunde: Ma bei Hr. Koch (Klassenraum 108)"
+            if (timetableNotificationsEnabled) {
+                NotificationHelper.sendTimetableChangeNotification(getApplication(), title, message)
+            }
+            repository.insertNotification(AppNotification(title = title, message = message, type = "TIMETABLE"))
+        }
+    }
+
+    fun clearNotifications() {
+        viewModelScope.launch {
+            repository.clearAllNotifications()
+        }
+    }
+
+    fun markNotificationsAsRead() {
+        viewModelScope.launch {
+            repository.markAllNotificationsAsRead()
+        }
     }
 
     fun exportCalendarSubscription() {

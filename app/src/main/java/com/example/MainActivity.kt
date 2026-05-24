@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import com.example.ui.UntisViewModel
 import com.example.ui.components.*
 import com.example.ui.screens.*
@@ -70,11 +72,11 @@ fun MainAppLayout(viewModel: UntisViewModel) {
                     icon = { Icon(Icons.Default.Home, contentDescription = StringResources.get("Home")) },
                     label = { Text(StringResources.get("Home"),  fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.background,
+                        selectedIconColor = NothingRed,
                         selectedTextColor = NothingRed,
                         unselectedIconColor = NothingMutedGray,
                         unselectedTextColor = NothingMutedGray,
-                        indicatorColor = NothingRed
+                        indicatorColor = NothingRed.copy(alpha = 0.12f)
                     )
                 )
 
@@ -84,25 +86,41 @@ fun MainAppLayout(viewModel: UntisViewModel) {
                     icon = { Icon(Icons.Default.DateRange, contentDescription = StringResources.get("Timetable")) },
                     label = { Text(StringResources.get("Timetable"), fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = NothingBlack,
+                        selectedIconColor = NothingRed,
                         selectedTextColor = NothingRed,
                         unselectedIconColor = NothingMutedGray,
                         unselectedTextColor = NothingMutedGray,
-                        indicatorColor = NothingRed
+                        indicatorColor = NothingRed.copy(alpha = 0.12f)
                     )
                 )
 
                 NavigationBarItem(
                     selected = viewModel.currentScreen == "MESSAGES",
                     onClick = { viewModel.currentScreen = "MESSAGES" },
-                    icon = { Icon(Icons.Default.Email, contentDescription = StringResources.get("Messages")) },
+                    icon = {
+                        val alertsState = viewModel.notifications.collectAsState(initial = emptyList())
+                        BadgedBox(
+                            badge = {
+                                if (alertsState.value.isNotEmpty()) {
+                                    Badge(
+                                        containerColor = NothingRed,
+                                        contentColor = Color.White
+                                    ) {
+                                        Text(alertsState.value.size.toString(), fontSize = 9.sp)
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Email, contentDescription = StringResources.get("Messages"))
+                        }
+                    },
                     label = { Text(StringResources.get("Messages"),  fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = NothingBlack,
+                        selectedIconColor = NothingRed,
                         selectedTextColor = NothingRed,
                         unselectedIconColor = NothingMutedGray,
                         unselectedTextColor = NothingMutedGray,
-                        indicatorColor = NothingRed
+                        indicatorColor = NothingRed.copy(alpha = 0.12f)
                     )
                 )
 
@@ -114,11 +132,11 @@ fun MainAppLayout(viewModel: UntisViewModel) {
                     icon = { Icon(Icons.Default.Person, contentDescription = StringResources.get("Profile")) },
                     label = { Text(StringResources.get("Profile"), fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = NothingBlack,
+                        selectedIconColor = NothingRed,
                         selectedTextColor = NothingRed,
                         unselectedIconColor = NothingMutedGray,
                         unselectedTextColor = NothingMutedGray,
-                        indicatorColor = NothingRed
+                        indicatorColor = NothingRed.copy(alpha = 0.12f)
                     )
                 )
             }
@@ -149,6 +167,9 @@ fun MainAppLayout(viewModel: UntisViewModel) {
 // --- STANDARD REPLICATED PROFILE SCREEN SECTIONS ---
 @Composable
 fun ProfileScreen(viewModel: UntisViewModel) {
+    val isDark = isSystemInDarkTheme()
+    val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -161,8 +182,8 @@ fun ProfileScreen(viewModel: UntisViewModel) {
 
         Surface(
             color = NothingCardGray,
-            shape = RoundedCornerShape(28.dp),
-            border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, borderColor),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -172,28 +193,29 @@ fun ProfileScreen(viewModel: UntisViewModel) {
                 Box(
                     modifier = Modifier
                         .size(54.dp)
-                        .background(NothingWhite, shape = CircleShape),
+                        .background(NothingRed.copy(alpha = 0.15f), shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "M",
-                        fontFamily = FontFamily.Monospace,
-                        color = NothingBlack,
-                        fontSize = 24.sp,
+                        text = if (viewModel.userInput.isNotEmpty()) viewModel.userInput.take(1).uppercase() else "S",
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingRed,
+                        fontSize = 22.sp,
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
                         text = viewModel.userInput.uppercase(),
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.Bold,
                         color = NothingWhite,
                         fontSize = 16.sp
                     )
                     Text(
                         text = "Gelehrtenschule des Johanneums",
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = FontFamily.SansSerif,
                         color = NothingMutedGray,
                         fontSize = 12.sp
                     )
@@ -204,8 +226,8 @@ fun ProfileScreen(viewModel: UntisViewModel) {
         // Action menu listings matching screenshot profile
         Surface(
             color = NothingCardGray,
-            shape = RoundedCornerShape(28.dp),
-            border = BorderStroke(1.dp, Color(0xFF333333)),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, borderColor),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column {
@@ -214,25 +236,25 @@ fun ProfileScreen(viewModel: UntisViewModel) {
                     title = "Hausaufgabenliste",
                     onClick = { viewModel.currentScreen = StringResources.get("HOMEWORK") }
                 )
-                Divider(color = Color(0xFF333333))
+                HorizontalDivider(color = borderColor)
                 ProfileOptionItem(
                     icon = Icons.Default.Star,
                     title = "Notenverwaltung",
                     onClick = { viewModel.currentScreen = "GRADES" }
                 )
-                Divider(color = Color(0xFF333333))
+                HorizontalDivider(color = borderColor)
                 ProfileOptionItem(
                     icon = Icons.Default.Info,
                     title = "Info & Credits",
                     onClick = { viewModel.currentScreen = "INFO" }
                 )
-                Divider(color = Color(0xFF333333))
+                HorizontalDivider(color = borderColor)
                 ProfileOptionItem(
                     icon = Icons.Default.Face,
                     title = "KI Hausaufgaben-Scanner",
                     onClick = { viewModel.currentScreen = "CHATBOT" }
                 )
-                Divider(color = Color(0xFF333333))
+                HorizontalDivider(color = borderColor)
                 ProfileOptionItem(
                     icon = Icons.Default.Settings,
                     title = StringResources.get("Einstellungen"),
@@ -271,11 +293,12 @@ fun ProfileOptionItem(
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = title,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Medium,
                 color = NothingWhite,
                 fontSize = 14.sp
             )
         }
-        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = NothingMutedGray)
+        Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = null, tint = NothingMutedGray, modifier = Modifier.size(20.dp))
     }
 }
