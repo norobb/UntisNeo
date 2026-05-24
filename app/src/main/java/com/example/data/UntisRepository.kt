@@ -72,6 +72,13 @@ class UntisRepository(
         prefs.edit().putString("last_notified_update_version", version).apply()
     }
 
+    fun getNotifiedLessonIds(): Set<String> = prefs.getStringSet("notified_lesson_ids", emptySet()) ?: emptySet()
+    fun addNotifiedLessonId(id: String) {
+        val current = getNotifiedLessonIds().toMutableSet()
+        current.add(id)
+        prefs.edit().putStringSet("notified_lesson_ids", current).apply()
+    }
+
     // Export ICS Content
     fun generateIcsString(lessons: List<TimetableLesson>): String {
         val sb = StringBuilder()

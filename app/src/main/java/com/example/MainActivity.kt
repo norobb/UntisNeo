@@ -39,6 +39,17 @@ import android.util.Log
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Schedule background timetable sync (every 15 minutes)
+        val syncWorkRequest = androidx.work.PeriodicWorkRequestBuilder<com.example.workers.TimetableSyncWorker>(
+            15, java.util.concurrent.TimeUnit.MINUTES
+        ).build()
+        androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "TimetableSyncWork",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            syncWorkRequest
+        )
+
         enableEdgeToEdge()
         setContent {
             val viewModel: UntisViewModel = viewModel()

@@ -14,8 +14,8 @@ android {
     applicationId = "com.aistudio.untisneo.whrtxz"
     minSdk = 24
     targetSdk = 36
-    versionCode = 6
-    versionName = "1.6.4"
+    versionCode = 7
+    versionName = "1.6.5"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -88,6 +88,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.navigation.compose)
+  implementation("androidx.work:work-runtime-ktx:2.9.0")
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)

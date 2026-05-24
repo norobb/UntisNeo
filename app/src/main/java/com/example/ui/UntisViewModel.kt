@@ -190,10 +190,17 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
                 // Inspect for timetable representation/shift/cancelled changes to notify
                 if (timetableNotificationsEnabled) {
                     val changedLessons = lessons.value.filter { it.status in listOf("SUBSTITUTION", "CANCELLED", "SHIFTED") }
-                    if (changedLessons.isNotEmpty()) {
-                        val firstChanged = changedLessons.first()
+                    val notifiedIds = repository.getNotifiedLessonIds()
+                    val newChanges = changedLessons.filter { !notifiedIds.contains(it.id.toString()) }
+
+                    if (newChanges.isNotEmpty()) {
+                        for (lesson in newChanges) {
+                            repository.addNotifiedLessonId(lesson.id.toString())
+                        }
+
+                        val firstChanged = newChanges.first()
                         val alertTitle = "Stundenplan-Änderung"
-                        val alertMessage = "${firstChanged.subjectCode} (${firstChanged.status}): ${firstChanged.info.ifEmpty { "Planabweichung festgetellt!" }} (${firstChanged.dayOfWeek}, ${firstChanged.period}. Std.)"
+                        val alertMessage = "${firstChanged.subjectCode} (${firstChanged.status}): ${firstChanged.info.ifEmpty { "Planabweichung festgestellt!" }} (${firstChanged.dayOfWeek}, ${firstChanged.period}. Std.)"
                         
                         NotificationHelper.sendTimetableChangeNotification(getApplication(), alertTitle, alertMessage)
                         repository.insertNotification(
