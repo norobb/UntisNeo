@@ -1,21 +1,44 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+  <img src="assets/banner.png" alt="Untis Neo Banner" width="100%" />
 </div>
 
-# Run and deploy your AI Studio app
+# Untis Neo 🚀
 
-This contains everything you need to run your app locally.
+> Ein moderner, inoffizieller und erneuerter Client für WebUntis.
 
-View your app in AI Studio: https://ai.studio/apps/ca63191c-4815-4559-b918-e1dad80f7215
+**Untis Neo** (Untis Mobile Renew) ist ein Android-Projekt, das eine neue und verbesserte Benutzeroberfläche für das Schulverwaltungs- und Stundenplan-System WebUntis bietet. Gebaut mit modernen Android-Technologien, liefert Untis Neo eine flüssige, aufgeräumte und visuell ansprechende Erfahrung für Schüler und Lehrer.
 
-## Run Locally
+## ✨ Features
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+- 📱 **Modernes Design**: Intuitive UI mit Jetpack Compose, inklusive flüssigen Animationen und Dark-Mode-Support.
+- ⚡ **Schnell & Effizient**: Optimierte Kommunikation mit der WebUntis JSON-RPC API für blitzschnelle Ladezeiten.
+- 📅 **Übersichtlicher Stundenplan**: Alle Fächer, Vertretungen und Räume auf einen Blick im Kalender.
+- 🔒 **Datenschutz im Fokus**: Direkte Kommunikation mit den Untis-Servern.
 
+## 🚀 Installation & Lokale Ausführung
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
+**Voraussetzungen:** [Android Studio](https://developer.android.com/studio)
+
+1. **Projekt klonen / öffnen**
+   Öffne Android Studio, wähle **Open** und wähle dieses Projektverzeichnis aus.
+2. **Abhängigkeiten synchronisieren**
+   Erlaube Android Studio, das Projekt einzurichten und alle nötigen Gradle-Dependencies herunterzuladen.
+3. **Umgebung konfigurieren**
+   Erstelle eine `.env`-Datei im Root-Verzeichnis, falls nötig (siehe `.env.example`).
+4. **App ausführen**
+   Wähle deinen Emulator oder ein physisches Gerät aus und klicke auf **Run** (oder `Shift + F10`), um Untis Neo zu starten.
+
+## 🛠️ Technologie-Stack
+
+- **Sprache**: Kotlin
+- **UI Framework**: Jetpack Compose
+- **Architektur**: MVVM (Model-View-ViewModel)
+- **Netzwerk**: Retrofit, OkHttp, Moshi (JSON-RPC)
+- **Asynchronität**: Kotlin Coroutines & Flow
+
+## 🤝 Mitwirken
+
+Pull Requests und Issues sind herzlich willkommen. Wenn du neue Features vorschlagen oder Fehler melden möchtest, eröffne gerne ein neues Issue.
+
+---
+*Hinweis: Dies ist ein inoffizielles Community-Projekt. Es steht in keiner offiziellen Verbindung zur Untis GmbH.*
