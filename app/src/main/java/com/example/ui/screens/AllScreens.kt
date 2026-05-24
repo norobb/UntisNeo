@@ -1754,6 +1754,7 @@ fun GradesScreen(viewModel: UntisViewModel) {
 fun ChatbotScreen(viewModel: UntisViewModel) {
     val context = LocalContext.current
     var selectedImageState by remember { mutableStateOf<Bitmap?>(null) }
+    var showApiSettingsDialog by remember { mutableStateOf(false) }
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val borderColor = if (isDark) Color(0xFF222222) else Color(0xFFE2E8F0)
 
@@ -1790,7 +1791,16 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            NothingHeader(text = StringResources.get("Neo Smart-Assistant"), fontSize = 28.sp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NothingHeader(text = StringResources.get("Neo Smart-Assistant"), fontSize = 28.sp)
+                IconButton(onClick = { showApiSettingsDialog = true }) {
+                    Icon(Icons.Default.Settings, contentDescription = "API Settings", tint = NothingMutedGray)
+                }
+            }
             Text(
                 text = StringResources.get("Stelle Fragen zum Unterricht, plane deinen Schultag oder fotografiere deine Hausaufgabe!"),
                 fontFamily = FontFamily.SansSerif,
@@ -1798,6 +1808,63 @@ fun ChatbotScreen(viewModel: UntisViewModel) {
                 fontSize = 12.sp,
                 lineHeight = 16.sp
             )
+        }
+
+        if (showApiSettingsDialog) {
+            Dialog(onDismissRequest = { showApiSettingsDialog = false }) {
+                Surface(
+                    color = NothingCardGray,
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, borderColor),
+                    modifier = Modifier.fillMaxWidth().padding(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Gemini API Konfiguration",
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.Bold,
+                            color = NothingWhite,
+                            fontSize = 18.sp
+                        )
+                        
+                        Text(
+                            text = "Hole dir deinen kostenlosen API Key im Google AI Studio.",
+                            fontFamily = FontFamily.SansSerif,
+                            color = NothingMutedGray,
+                            fontSize = 13.sp
+                        )
+
+                        NothingButton(
+                            text = "Link öffnen",
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            isPrimary = false
+                        )
+                        
+                        NothingTextField(
+                            value = viewModel.geminiApiKeyInput,
+                            onValueChange = { viewModel.geminiApiKeyInput = it },
+                            label = "Dein API Key"
+                        )
+                        
+                        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                            NothingButton(
+                                text = "Speichern & Schließen",
+                                onClick = {
+                                    viewModel.saveAppSettings()
+                                    showApiSettingsDialog = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Chat logs bubble scroll list

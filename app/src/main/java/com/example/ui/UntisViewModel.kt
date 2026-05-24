@@ -41,6 +41,7 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     var reminderMinutesInput by mutableStateOf(repository.getReminderMinutes())
     var homeworkNotificationsEnabled by mutableStateOf(repository.getHomeworkNotificationsEnabled())
     var timetableNotificationsEnabled by mutableStateOf(repository.getTimetableNotificationsEnabled())
+    var hasCompletedOnboarding by mutableStateOf(repository.getHasCompletedOnboarding())
 
     // --- Screen Navigation ---
     // Screens: LOGON, HOME, TIMETABLE, MESSAGES, HOMEWORK, GRADES, CHATBOT, SETTINGS
@@ -61,7 +62,7 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     // --- Chat Room Messages List ---
     var chatMessages by mutableStateOf(
         listOf(
-            ChatMessage("ChatBot", "Hi Noah! Ich bin dein Untis Neo Smart-Assistent. Schreibe mir deine Hausaufgabe oder lade einen Screenshot hoch, und ich trage sie direkt ins richtige Fach ein!", null)
+            com.example.ui.screens.ChatMessage("Neo", "Hallo! Ich bin Neo, dein intelligenter Hausaufgaben- und Stundenplan-Assistent. Du kannst mich fragen, was du aufhast, oder mir ein Foto von deinen Hausaufgaben schicken, um sie direkt eintragen zu lassen! Hast du deinen Gemini API Key in den Einstellungen schon hinterlegt?", null)
         )
     )
     var activeChatInput by mutableStateOf("")
@@ -143,6 +144,8 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+
+        hasCompletedOnboarding = repository.getHasCompletedOnboarding()
     }
 
     fun triggerSync() {
@@ -182,6 +185,7 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         repository.saveUseStockTheme(useStockThemePref)
         repository.saveHomeworkNotificationsEnabled(homeworkNotificationsEnabled)
         repository.saveTimetableNotificationsEnabled(timetableNotificationsEnabled)
+        repository.saveHasCompletedOnboarding(hasCompletedOnboarding)
         triggerSync()
     }
 

@@ -62,6 +62,11 @@ class UntisRepository(
         prefs.edit().putBoolean("use_stock_theme", use).apply()
     }
 
+    fun getHasCompletedOnboarding(): Boolean = prefs.getBoolean("has_completed_onboarding", false)
+    fun saveHasCompletedOnboarding(completed: Boolean) {
+        prefs.edit().putBoolean("has_completed_onboarding", completed).apply()
+    }
+
     // Export ICS Content
     fun generateIcsString(lessons: List<TimetableLesson>): String {
         val sb = StringBuilder()

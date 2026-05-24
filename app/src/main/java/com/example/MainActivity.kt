@@ -61,6 +61,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainAppLayout(viewModel: UntisViewModel) {
+    if (!viewModel.hasCompletedOnboarding) {
+        com.example.ui.screens.OnboardingScreen(viewModel)
+        return
+    }
+
     if (viewModel.currentScreen == "LOGON") {
         LogonScreen(viewModel)
         return
