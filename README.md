@@ -8,6 +8,13 @@
 
 **Untis Neo** (Untis Mobile Renew) ist ein Android-Projekt, das eine neue und verbesserte Benutzeroberfläche für das Schulverwaltungs- und Stundenplan-System WebUntis bietet. Gebaut mit modernen Android-Technologien, liefert Untis Neo eine flüssige, aufgeräumte und visuell ansprechende Erfahrung für Schüler und Lehrer.
 
+## Neu in UntisNeo
+- **LoRa Meshtastic Integration**: Chatte mit deinen Mitschülern komplett offline über das P2P-Radar! Unterstützt Heltec-LoRa-Module (via Intent-Broadcast an die offizielle Meshtastic App).
+- **Multiplattform (Android & iOS)**:
+  - `untisneo-android`: Die native Android-App inklusive Widgets und Hintergrund-Synchronisation.
+  - `untisneo-ios`: Die neue iOS-App (aktuell im Aufbau), automatisch via GitHub Actions kompiliert.
+- **KI Chatbot (Gemini)**: Fotografiere eine Hausaufgabe und Gemini analysiert und trägt sie für dich ein.
+
 ## ✨ Features
 
 - 📱 **Modernes Design**: Intuitive UI mit Jetpack Compose, inklusive flüssigen Animationen und Dark-Mode-Support.
