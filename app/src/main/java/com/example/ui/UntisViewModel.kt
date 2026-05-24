@@ -14,6 +14,7 @@ import com.example.data.api.GeminiService
 import com.example.data.api.HomeworkResult
 import com.example.data.room.*
 import com.example.utils.NotificationHelper
+import com.example.utils.P2pManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,7 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
 
     private val database = AppDatabase.getDatabase(application)
     private val repository = UntisRepository(application, database.untisDao())
+    val p2pManager = P2pManager(application)
 
     // --- Saved Preferences & Settings State ---
     var serverInput by mutableStateOf(repository.getServer().ifEmpty { "" })
@@ -87,6 +89,10 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
     val messagesSent: StateFlow<List<MessageItem>> = repository.getMessagesFlow("SENT")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val p2pDiscoveredEndpoints = p2pManager.discoveredEndpoints.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val p2pConnectedEndpoint = p2pManager.connectedEndpoint.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val p2pIncomingMessages = p2pManager.incomingMessages.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     // Active Compose creation dialogues inputs
     var showAddHomeworkDialog by mutableStateOf(false)
     var newHwSubject by mutableStateOf("Ma")
@@ -120,6 +126,21 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
             while(true) {
                 kotlinx.coroutines.delay(180_000L)
                 triggerSync()
+            }
+        }
+
+        viewModelScope.launch {
+            p2pManager.incomingMessages.collect { msg ->
+                if (msg != null) {
+                    val endpointName = p2pManager.connectedEndpoint.value?.name ?: "P2P User"
+                    repository.saveIncomingMessage(endpointName, "P2P Nachricht", msg)
+                    
+                    if (homeworkNotificationsEnabled) {
+                        NotificationHelper.sendHomeworkNotification(getApplication(), "Neue P2P Nachricht", "Von $endpointName: $msg")
+                    }
+                    
+                    p2pManager.clearIncoming()
+                }
             }
         }
     }
@@ -238,6 +259,36 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.sendMessage(recipient, title, content)
             showSendMessageDialog = false
+        }
+    }
+
+    // P2P commands
+    fun startP2pAdvertising() {
+        p2pManager.startAdvertising(userInput.ifEmpty { "Schüler" })
+    }
+
+    fun startP2pDiscovery() {
+        p2pManager.startDiscovery(userInput.ifEmpty { "Schüler" })
+    }
+
+    fun connectToP2pEndpoint(endpointId: String) {
+        p2pManager.requestConnection(endpointId)
+    }
+
+    fun disconnectP2p() {
+        p2pManager.disconnect()
+    }
+
+    fun stopP2p() {
+        p2pManager.stop()
+    }
+
+    fun sendP2pMessage(content: String) {
+        if (p2pManager.connectedEndpoint.value != null) {
+            p2pManager.sendMessage(content)
+            viewModelScope.launch {
+                repository.sendMessage(p2pManager.connectedEndpoint.value!!.name, "P2P Sent", content)
+            }
         }
     }
 

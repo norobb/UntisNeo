@@ -811,9 +811,10 @@ fun MessagesScreen(viewModel: UntisViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 listOf(
-                    "INBOX" to "Posteingang",
+                    "INBOX" to "Eingang",
                     "SENT" to "Gesendet",
-                    "ALERTS" to "Alerts Log"
+                    "ALERTS" to "Alerts",
+                    "P2P" to "Radar"
                 ).forEach { tabInfo ->
                     Button(
                         onClick = { selectedTab = tabInfo.first },
@@ -884,7 +885,48 @@ fun MessagesScreen(viewModel: UntisViewModel) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (selectedTab == "ALERTS") {
+            if (selectedTab == "P2P") {
+                item {
+                    val p2pConnected by viewModel.p2pConnectedEndpoint.collectAsState()
+                    val p2pDiscovered by viewModel.p2pDiscoveredEndpoints.collectAsState()
+                    var msgText by remember { mutableStateOf("") }
+                    
+                    Surface(color = NothingCardGray, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("OFFLINE RADAR", color = NothingRed, fontWeight = FontWeight.Bold, fontFamily = FontFamily.SansSerif)
+                            Text("Verbinde dich direkt mit Mitschülern über Bluetooth & lokales WLAN, ganz ohne Internetverbindung.", color = NothingMutedGray, fontSize = 12.sp, lineHeight = 16.sp)
+                            
+                            if (p2pConnected == null) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    NothingButton("Suchen", onClick = { viewModel.startP2pDiscovery() }, modifier = Modifier.weight(1f))
+                                    NothingButton("Sichtbar", onClick = { viewModel.startP2pAdvertising() }, modifier = Modifier.weight(1f), isPrimary = false)
+                                }
+                            } else {
+                                Text("Verbunden mit: ${p2pConnected!!.name}", color = NothingWhite, fontWeight = FontWeight.Bold)
+                                NothingTextField(value = msgText, onValueChange = { msgText = it }, label = "Nachricht eingeben")
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    NothingButton("Senden", onClick = { viewModel.sendP2pMessage(msgText); msgText = "" }, modifier = Modifier.weight(1f))
+                                    NothingButton("Trennen", onClick = { viewModel.disconnectP2p() }, modifier = Modifier.weight(1f), isPrimary = false)
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (p2pConnected == null && p2pDiscovered.isNotEmpty()) {
+                        Text("Gefundene Mitschüler:", color = NothingWhite, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                            p2pDiscovered.forEach { endpoint ->
+                                Surface(color = NothingCardGray, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { viewModel.connectToP2pEndpoint(endpoint.id) }) {
+                                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(endpoint.name, color = NothingWhite, fontFamily = FontFamily.SansSerif)
+                                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = NothingMutedGray)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (selectedTab == "ALERTS") {
                 if (alerts.isEmpty()) {
                     item {
                         Column(
