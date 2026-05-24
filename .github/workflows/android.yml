@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    defaults:
+      run:
+        working-directory: ./untisneo-android
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,7 +37,7 @@ jobs:
 
       - name: Build Release APK
         env:
-          KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
+          KEYSTORE_PATH: ${{ github.workspace }}/untisneo-android/my-upload-key.jks
           STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: gradle assembleRelease
@@ -46,7 +49,7 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/app-release.apk
+          files: untisneo-android/app/build/outputs/apk/release/app-release.apk
           name: Release ${{ env.TAG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

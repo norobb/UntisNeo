@@ -1,0 +1,102 @@
+name: Build iOS IPA
+
+on:
+  push:
+    tags:
+      - 'ios-*'
+
+jobs:
+  build_ios:
+    name: Build iOS (.ipa)
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: ./untisneo-ios
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Prebuild iOS project (Expo)
+        run: npx expo prebuild --platform ios
+
+      # To build a signed .ipa, you MUST provide Apple Certificates.
+      # Create these Repository Secrets in GitHub:
+      # - APPLE_CERTIFICATE_BASE64 (Your distribution .p12 certificate in Base64)
+      # - APPLE_CERTIFICATE_PASSWORD (Password for the .p12)
+      # - APPLE_PROVISIONING_PROFILE_BASE64 (Your .mobileprovision in Base64)
+      #
+      # Uncomment the steps below once you have added the secrets!
+
+      # - name: Install Apple Certificate and Provisioning Profile
+      #   env:
+      #     BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+      #     P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      #     BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+      #     KEYCHAIN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     # Create variables
+      #     CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+      #     PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+      #     KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+      #     
+      #     # Import certificate and profile
+      #     echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+      #     echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+      #     
+      #     # Create temporary keychain
+      #     security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+      #     security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+      #     security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+      #     
+      #     # Import certificate to keychain
+      #     security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+      #     security list-keychain -d user -s $KEYCHAIN_PATH
+      #     
+      #     # Apply provisioning profile
+      #     mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      #     cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+      # - name: Build iOS App
+      #   run: |
+      #     cd ios
+      #     xcodebuild -workspace untisneoios.xcworkspace \
+      #       -scheme untisneoios \
+      #       -sdk iphoneos \
+      #       -configuration Release \
+      #       -archivePath $PWD/build/untisneoios.xcarchive \
+      #       archive CODE_SIGNING_ALLOWED=YES
+      #
+      #     xcodebuild -exportArchive \
+      #       -archivePath $PWD/build/untisneoios.xcarchive \
+      #       -exportOptionsPlist exportOptions.plist \
+      #       -exportPath $PWD/build
+
+      # - name: Get tag name
+      #   id: get_tag
+      #   run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      # - name: Publish Release
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     files: untisneo-ios/ios/build/*.ipa
+      #     name: iOS Release ${{ env.TAG_NAME }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Simulator App (Unsigned)
+        run: |
+          cd ios
+          xcodebuild -workspace untisneoios.xcworkspace \
+            -scheme untisneoios \
+            -sdk iphonesimulator \
+            -configuration Release CODE_SIGNING_ALLOWED=NO

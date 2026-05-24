@@ -925,6 +925,17 @@ fun MessagesScreen(viewModel: UntisViewModel) {
                             }
                         }
                     }
+                    
+                    Surface(color = NothingCardGray, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("LORA MESHTASTIC", color = NothingRed, fontWeight = FontWeight.Bold, fontFamily = FontFamily.SansSerif)
+                            Text("Sende Nachrichten weitreichend über dein verbundenes Heltec LoRa Modul an andere UntisNeo Nutzer.", color = NothingMutedGray, fontSize = 12.sp, lineHeight = 16.sp)
+                            
+                            var loraText by remember { mutableStateOf("") }
+                            NothingTextField(value = loraText, onValueChange = { loraText = it }, label = "LoRa Broadcast")
+                            NothingButton("Über Meshtastic Senden", onClick = { viewModel.broadcastToMeshtastic(loraText); loraText = "" }, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
                 }
             } else if (selectedTab == "ALERTS") {
                 if (alerts.isEmpty()) {

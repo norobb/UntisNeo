@@ -262,6 +262,22 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Meshtastic
+    fun broadcastToMeshtastic(text: String) {
+        try {
+            val intent = android.content.Intent("com.geeksville.mesh.SEND_TEXT")
+            intent.putExtra("text", text)
+            intent.setPackage("com.geeksville.mesh")
+            getApplication<android.app.Application>().sendBroadcast(intent)
+            
+            viewModelScope.launch {
+                repository.sendMessage("Meshtastic LoRa", "LoRa Broadcast", text)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("Meshtastic", "Failed to broadcast", e)
+        }
+    }
+
     // P2P commands
     fun startP2pAdvertising() {
         p2pManager.startAdvertising(userInput.ifEmpty { "Schüler" })
