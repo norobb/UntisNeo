@@ -14,6 +14,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.graphicsLayer
 
 val NothingBlack @Composable get() = MaterialTheme.colorScheme.background
 val NothingDarkGray @Composable get() = MaterialTheme.colorScheme.surfaceVariant
@@ -84,44 +90,58 @@ fun NothingButton(
     modifier: Modifier = Modifier,
     isPrimary: Boolean = true
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.95f else 1f)
+
     if (isPrimary) {
         Button(
             onClick = onClick,
+            interactionSource = interactionSource,
             modifier = modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(52.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ),
-            shape = RoundedCornerShape(24.dp)
+            shape = RoundedCornerShape(26.dp)
         ) {
             Text(
                 text = text.uppercase(),
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
-                fontSize = 13.sp
+                fontSize = 14.sp
             )
         }
     } else {
         OutlinedButton(
             onClick = onClick,
+            interactionSource = interactionSource,
             modifier = modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(52.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = MaterialTheme.colorScheme.onSurface
             ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)),
-            shape = RoundedCornerShape(24.dp)
+            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
+            shape = RoundedCornerShape(26.dp)
         ) {
             Text(
                 text = text.uppercase(),
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
-                fontSize = 13.sp
+                fontSize = 14.sp
             )
         }
     }

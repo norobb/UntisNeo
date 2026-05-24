@@ -14,8 +14,8 @@ android {
     applicationId = "com.aistudio.untisneo.whrtxz"
     minSdk = 24
     targetSdk = 36
-    versionCode = 7
-    versionName = "1.6.5"
+    versionCode = 8
+    versionName = "1.7.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
