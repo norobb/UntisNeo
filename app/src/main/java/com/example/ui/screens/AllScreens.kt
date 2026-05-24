@@ -121,7 +121,8 @@ fun LogonScreen(viewModel: UntisViewModel) {
                         value = viewModel.passwordInput,
                         onValueChange = { viewModel.passwordInput = it },
                         label = "Passwort",
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password)
                     )
 
                     Row(

@@ -42,6 +42,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: UntisViewModel = viewModel()
             val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+                ) {}
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+
             MyApplicationTheme(darkTheme = isDarkTheme, dynamicColor = viewModel.useStockThemePref) {
                 MainAppLayout(viewModel)
             }
