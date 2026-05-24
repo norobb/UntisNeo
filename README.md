@@ -10,9 +10,6 @@
 
 ## Neu in UntisNeo
 - **LoRa Meshtastic Integration**: Chatte mit deinen Mitschülern komplett offline über das P2P-Radar! Unterstützt Heltec-LoRa-Module (via Intent-Broadcast an die offizielle Meshtastic App).
-- **Multiplattform (Android & iOS)**:
-  - `untisneo-android`: Die native Android-App inklusive Widgets und Hintergrund-Synchronisation.
-  - `untisneo-ios`: Die neue iOS-App (aktuell im Aufbau), automatisch via GitHub Actions kompiliert.
 - **KI Chatbot (Gemini)**: Fotografiere eine Hausaufgabe und Gemini analysiert und trägt sie für dich ein.
 
 ## ✨ Features
