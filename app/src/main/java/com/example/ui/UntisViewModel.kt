@@ -262,6 +262,21 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun checkForUpdatesManual(context: android.content.Context) {
+        viewModelScope.launch {
+            val info = com.example.utils.AutoUpdater.checkForUpdates()
+            if (info != null && info.available) {
+                _updateInfo.value = info
+            } else {
+                android.widget.Toast.makeText(context, "Du hast bereits die neueste Version!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        _updateInfo.value = null
+    }
+
     // Meshtastic
     fun broadcastToMeshtastic(text: String) {
         try {

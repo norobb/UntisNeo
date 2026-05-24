@@ -2341,6 +2341,39 @@ fun SettingsScreen(viewModel: UntisViewModel) {
             }
         }
 
+        // System & Updates Section
+        item {
+            Surface(
+                color = NothingCardGray,
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, borderColor),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "SYSTEM & UPDATES",
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingMutedGray,
+                        letterSpacing = 1.sp
+                    )
+
+                    NothingButton(
+                        text = "Nach Updates suchen",
+                        onClick = {
+                            viewModel.checkForUpdatesManual(context)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        isPrimary = false
+                    )
+                }
+            }
+        }
+
         // About / Log out
         item {
             NothingButton(

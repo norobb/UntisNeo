@@ -172,6 +172,28 @@ fun MainAppLayout(viewModel: UntisViewModel) {
             }
         }
     }
+    
+    val updateInfo by viewModel.updateInfo.collectAsState()
+    if (updateInfo != null) {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissUpdate() },
+            title = { Text("Update verfügbar (${updateInfo!!.newVersion})", color = NothingWhite) },
+            text = { Text(updateInfo!!.releaseNotes, color = NothingMutedGray) },
+            confirmButton = {
+                NothingButton("Herunterladen & Installieren", onClick = {
+                    com.example.utils.AutoUpdater.downloadAndInstall(context, updateInfo!!.downloadUrl)
+                    viewModel.dismissUpdate()
+                })
+            },
+            dismissButton = {
+                NothingButton("Später", onClick = { viewModel.dismissUpdate() }, isPrimary = false)
+            },
+            containerColor = NothingCardGray,
+            titleContentColor = NothingWhite,
+            textContentColor = NothingMutedGray
+        )
+    }
 }
 
 // --- STANDARD REPLICATED PROFILE SCREEN SECTIONS ---
