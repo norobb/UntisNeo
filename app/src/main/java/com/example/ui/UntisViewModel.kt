@@ -149,6 +149,34 @@ class UntisViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         hasCompletedOnboarding = repository.getHasCompletedOnboarding()
+
+        // Background update check on start
+        viewModelScope.launch {
+            val info = com.example.utils.AutoUpdater.checkForUpdates()
+            if (info != null && info.available) {
+                val lastNotified = repository.getLastNotifiedUpdateVersion()
+                if (info.newVersion != lastNotified) {
+                    _updateInfo.value = info
+                    // Save it immediately so it doesn't pop up again next launch
+                    repository.saveLastNotifiedUpdateVersion(info.newVersion)
+                }
+            }
+        }
+        
+        // Periodic update check every 2 hours
+        viewModelScope.launch {
+            while(true) {
+                kotlinx.coroutines.delay(2 * 60 * 60 * 1000L) // 2 hours
+                val info = com.example.utils.AutoUpdater.checkForUpdates()
+                if (info != null && info.available) {
+                    val lastNotified = repository.getLastNotifiedUpdateVersion()
+                    if (info.newVersion != lastNotified) {
+                        _updateInfo.value = info
+                        repository.saveLastNotifiedUpdateVersion(info.newVersion)
+                    }
+                }
+            }
+        }
     }
 
     fun triggerSync() {

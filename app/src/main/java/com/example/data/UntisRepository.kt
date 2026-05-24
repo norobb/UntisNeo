@@ -67,6 +67,11 @@ class UntisRepository(
         prefs.edit().putBoolean("has_completed_onboarding", completed).apply()
     }
 
+    fun getLastNotifiedUpdateVersion(): String = prefs.getString("last_notified_update_version", "") ?: ""
+    fun saveLastNotifiedUpdateVersion(version: String) {
+        prefs.edit().putString("last_notified_update_version", version).apply()
+    }
+
     // Export ICS Content
     fun generateIcsString(lessons: List<TimetableLesson>): String {
         val sb = StringBuilder()
